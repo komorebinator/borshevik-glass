@@ -151,6 +151,22 @@ function helpers(scenario) {
         wallpaper(name) {
             vm('wallpaper', makeWallpaper(name));
         },
+        setLightStyle(on) {
+            vm('ssh', `uid=$(id -u tester); runuser -u tester -- env DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$uid/bus dconf ${on === null ? 'reset' : 'write'} /org/gnome/shell/extensions/borshevik-glass/light-style ${on === null ? '' : on}`);
+            h.sleep(1.5);
+        },
+        // GNOME's Quick Settings, in which of its two variants: light, or dark
+        expectQuickSettings(variant) {
+            h.eval('Main.panel.statusArea.quickSettings.menu.open(false)');
+            h.sleep(1.5);
+            const box = h.actorBox('Main.panel.statusArea.quickSettings.menu.box');
+            const spot = {x: box.x + 30, y: box.y + box.height - 12, width: 4, height: 4};
+            const {mean} = h.shot().region(spot);
+            h.eval('Main.panel.statusArea.quickSettings.menu.close(false)');
+            const light = Math.min(...mean) > 220, dark = Math.max(...mean) < 80;
+            if (variant === 'light' ? !light : !dark)
+                h.fail(`Quick Settings is not GNOME's ${variant} one: its background is ${mean.map(Math.round)}`);
+        },
         setEnabled(on) {
             h.eval(`Main.extensionManager.${on ? 'enableExtension' : 'disableExtension'}('${UUID}')`);
             h.sleep(2);
@@ -248,6 +264,7 @@ function reset(h) {
         global.workspace_manager.get_workspace_by_index(0).activate(global.get_current_time()); 'ok'`);
     h.eval(`Main.extensionManager.lookup('${UUID}')?.state === 1 ? 'on' :
         (Main.extensionManager.enableExtension('${UUID}'), 'enabled')`);
+    h.setLightStyle(null);
     h.scheme('dark');
     h.wallpaper('A');
     h.sleep(1.5);

@@ -17,7 +17,7 @@ software:
   - "@BorshevikGlassExtension"
 guidelines:
   - "The project is licensed GPL-2.0-or-later, the terms of GNOME Shell itself, as Borshevik's other new extensions are (the author's decision, 2026-11-03). LICENSE holds the GPL-2.0 text, which does not say \"or later\" by itself, so every source file says it with an `SPDX-License-Identifier: GPL-2.0-or-later` line at its top. Blur my Shell is GPL-3.0-only: its code is read to learn where GNOME Shell keeps what is drawn on, never copied, since taking it would bind the whole extension to GPL-3.0."
-  - "Borshevik Glass replaces Blur my Shell in Borshevik in one change of Borshevik's, made once the extension is trusted: list.json gains this extension and loses Blur my Shell together with its default patch, and the image check on its popup blur goes (@GnomeExtensions). Both at once is never shipped: they would each make the panel and the overview transparent and lay their own picture under them, and which one ends up on top depends on the order GNOME enables them in."
+  - "Borshevik Glass replaces Blur my Shell in Borshevik in one change of Borshevik's, made once the extension is trusted: list.json gains this extension, naming its schemas, and loses Blur my Shell together with its default patch, and the image check on its popup blur goes (@GnomeExtensions). Both at once is never shipped: they would each make the panel and the overview transparent and lay their own picture under them, and which one ends up on top depends on the order GNOME enables them in."
 startup:
   - load
 workflow:

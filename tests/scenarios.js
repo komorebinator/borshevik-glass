@@ -205,14 +205,7 @@ export const scenarios = [
         path: 'follows-colour-scheme#menus-light',
         run(h) {
             h.scheme('light');
-            h.eval('Main.panel.statusArea.quickSettings.menu.open(false)');
-            h.sleep(1.5);
-            const box = h.actorBox('Main.panel.statusArea.quickSettings.menu.box');
-            const spot = {x: box.x + 30, y: box.y + box.height - 12, width: 4, height: 4};
-            const {mean} = h.shot().region(spot);
-            h.eval('Main.panel.statusArea.quickSettings.menu.close(false)');
-            if (Math.min(...mean) < 220)
-                h.fail(`Quick Settings is not GNOME's light one: its background is ${mean.map(Math.round)}`);
+            h.expectQuickSettings('light');
         },
     },
     {
@@ -301,10 +294,29 @@ export const scenarios = [
         },
     },
     {
+        path: 'light-optional#off-stays-dark',
+        run(h) {
+            h.scheme('light');
+            h.setLightStyle(false);
+            h.expectColour('panel strip', h.shot().region(h.panelStrip()), h.glass('dark', 'A', 'panel'));
+            h.expectQuickSettings('dark');
+        },
+    },
+    {
+        path: 'light-optional#off-even-for-prefer-light',
+        run(h) {
+            h.setLightStyle(false);
+            h.scheme('light-only');
+            h.expectColour('panel strip', h.shot().region(h.panelStrip()), h.glass('dark', 'A', 'panel'));
+            h.expectQuickSettings('dark');
+        },
+    },
+    {
         path: 'disable-restores#disable',
         run(h) {
             h.setEnabled(false);
-            // the Workspace Manager opens the overview on an empty workspace by itself
+            // the overview has been found open here for a reason not yet known; it is
+            // closed before looking, so the scenario judges the panel and not that
             h.eval('Main.overview.hide(); "ok"');
             h.sleep(1.5);
             h.expectColour('panel strip', h.shot().region(h.panelStrip()), [0, 0, 0], 4);

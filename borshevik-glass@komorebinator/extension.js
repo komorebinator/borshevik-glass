@@ -26,11 +26,15 @@ const GNOME_VEIL_ALPHA = 204;
 // The name of the blur behind an open folder, on GNOME's folder dialog.
 const FOLDER_BLUR = 'borshevik-glass-folder-blur';
 
-// On Main.uiGroup while GNOME's dark style is off: the stylesheet's light rules.
+// On Main.uiGroup while GNOME's dark style is off and the light style on: the
+// stylesheet's light rules.
 const LIGHT_STYLE = 'borshevik-glass-light';
 
-// The session mode colour scheme under which GNOME Shell is dark only for prefer-dark.
+// The session mode colour schemes the extension sets: under the first GNOME Shell
+// is dark only for prefer-dark, under the second always, with the light style off.
 const LIGHT_SESSION_SCHEME = 'prefer-light';
+const DARK_SESSION_SCHEME = 'force-dark';
+const OWN_SESSION_SCHEMES = [LIGHT_SESSION_SCHEME, DARK_SESSION_SCHEME];
 
 // One monitor's wallpaper, blurred once, under a tint. The blur is
 // Shell.BlurEffect in ACTOR mode on the group holding the wallpaper, so it is
@@ -79,6 +83,7 @@ export default class BorshevikGlassExtension extends Extension {
     enable() {
         this._actors = [];
         this._gnomeSessionScheme = null;
+        this._settings = this.getSettings();
 
         // Holds no picture: its theme node is where the folder veil's colour is read.
         this._veilStyle = new St.Widget({style_class: 'borshevik-glass-folder-veil', visible: false});
@@ -96,6 +101,10 @@ export default class BorshevikGlassExtension extends Extension {
             () => this._syncScheme(), this);
         Main.sessionMode.connectObject('updated',
             () => this._syncSessionScheme(), this);
+        this._settings.connectObject('changed::light-style', () => {
+            this._syncSessionScheme();
+            this._syncScheme();
+        }, this);
         Main.overview.connectObject(
             'showing', () => this._fadePanelGlass(0),
             'hiding', () => this._fadePanelGlass(255),
@@ -117,6 +126,8 @@ export default class BorshevikGlassExtension extends Extension {
         St.Settings.get().disconnectObject(this);
         Main.sessionMode.disconnectObject(this);
         Main.overview.disconnectObject(this);
+        this._settings.disconnectObject(this);
+        this._settings = null;
         Main.layoutManager.overviewGroup.get_children()
             .filter(child => child instanceof AppDisplay.AppFolderDialog)
             .forEach(dialog => {
@@ -124,7 +135,7 @@ export default class BorshevikGlassExtension extends Extension {
                 dialog.remove_effect_by_name(FOLDER_BLUR);
             });
 
-        if (this._gnomeSessionScheme !== null && Main.sessionMode.colorScheme === LIGHT_SESSION_SCHEME) {
+        if (this._gnomeSessionScheme !== null && OWN_SESSION_SCHEMES.includes(Main.sessionMode.colorScheme)) {
             Main.sessionMode.colorScheme = this._gnomeSessionScheme;
             St.Settings.get().notify('color-scheme');
         }
@@ -139,19 +150,25 @@ export default class BorshevikGlassExtension extends Extension {
 
     // GNOME's user mode is prefer-dark, under which the shell is light only for
     // prefer-light; under prefer-light it is dark only for prefer-dark, the same
-    // rule as the glass. GNOME rebuilds the mode's properties at every update.
+    // rule as the glass, and under force-dark always dark, for the light style
+    // switched off. GNOME rebuilds the mode's properties at every update.
     _syncSessionScheme() {
-        if (Main.sessionMode.colorScheme === LIGHT_SESSION_SCHEME)
+        const target = this._settings.get_boolean('light-style')
+            ? LIGHT_SESSION_SCHEME : DARK_SESSION_SCHEME;
+        const current = Main.sessionMode.colorScheme;
+        if (current === target)
             return;
-        this._gnomeSessionScheme = Main.sessionMode.colorScheme;
-        Main.sessionMode.colorScheme = LIGHT_SESSION_SCHEME;
+        if (!OWN_SESSION_SCHEMES.includes(current))
+            this._gnomeSessionScheme = current;
+        Main.sessionMode.colorScheme = target;
         // what makes GNOME Shell pick its stylesheet again
         St.Settings.get().notify('color-scheme');
     }
 
-    // Light unless dark style is on.
+    // Light unless dark style is on or the light style is switched off.
     _syncScheme() {
-        const dark = St.Settings.get().color_scheme === St.SystemColorScheme.PREFER_DARK;
+        const dark = !this._settings.get_boolean('light-style') ||
+            St.Settings.get().color_scheme === St.SystemColorScheme.PREFER_DARK;
         if (dark)
             Main.layoutManager.uiGroup.remove_style_class_name(LIGHT_STYLE);
         else

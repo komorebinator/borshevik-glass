@@ -273,13 +273,14 @@ print(b.get("container-image-reference-digest", ""), b.get("container-image-refe
 cmd_deploy() {
     need_running
     [[ -d "$repo_root/$uuid" ]] || die "no $uuid in $repo_root"
-    tar -C "$repo_root" -cf - "$uuid" | guest_once "$guest_lib"'
+    tar -C "$repo_root" -cf - --exclude=gschemas.compiled "$uuid" | guest_once "$guest_lib"'
         set -e
         ext=$home/.local/share/gnome-shell/extensions
         runuser -u tester -- mkdir -p "$ext"
         rm -rf "$ext/'"$uuid"'"
         tar -C "$ext" -xf -
         chown -R tester:tester "$ext"
+        runuser -u tester -- glib-compile-schemas "$ext/'"$uuid"'/schemas"
         log_out
         set_extension - '"$blur_my_shell"'
         set_extension + '"$uuid"'

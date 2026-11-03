@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.borshevik-glass" path="/org/gnome/shell/extensions/borshevik-glass/">
+    <key name="light-style" type="b">
+      <default>true</default>
+      <summary>Light style</summary>
+      <description>Whether the glass, the panel and GNOME's menus turn light while GNOME's dark style is off. Off: always dark, prefer-light included.</description>
+    </key>
+  </schema>
+</schemalist>
