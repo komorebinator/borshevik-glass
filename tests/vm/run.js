@@ -166,6 +166,15 @@ function helpers(scenario) {
                 return JSON.stringify([c.red, c.green, c.blue, c.alpha / 255]);
             })()`));
         },
+        // the open folder's card as the extension has coloured it, as [r, g, b, alpha]:
+        // the stylesheet's colour with a share of the accent, so read from the shell
+        folderCard() {
+            return JSON.parse(h.eval(`(() => {
+                const d = Main.layoutManager.overviewGroup.get_children().find(c => c._isOpen);
+                const c = d.child.child.get_theme_node().get_background_color();
+                return JSON.stringify([c.red, c.green, c.blue, c.alpha / 255]);
+            })()`));
+        },
         // GNOME's Quick Settings, in which of its two variants: light, or dark
         expectQuickSettings(variant) {
             h.eval('Main.panel.statusArea.quickSettings.menu.open(false)');
@@ -247,6 +256,10 @@ function helpers(scenario) {
         },
         veil(scheme) {
             return cssColour(scheme, 'borshevik-glass-folder-veil');
+        },
+        // the colour the stylesheet gives a style class, in the dark or the light case
+        css(scheme, styleClass) {
+            return cssColour(scheme, styleClass);
         },
         expectColour(what, {mean}, expected, tolerance = 10) {
             const off = Math.max(...mean.map((v, c) => Math.abs(v - expected[c])));

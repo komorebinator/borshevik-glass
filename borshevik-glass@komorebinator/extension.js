@@ -25,6 +25,11 @@ const GNOME_VEIL_ALPHA = 204;
 // The name of the blur behind an open folder, on GNOME's folder dialog.
 const FOLDER_BLUR = 'borshevik-glass-folder-blur';
 
+// The share of the glass's accent amount mixed into an open folder's card, by
+// case: the dark card's base is lighter and denser than the dark tint's, and the
+// same share reads stronger there.
+const FOLDER_CARD_ACCENT_SHARE = {dark: 0.35, light: 0.5};
+
 // On Main.uiGroup while GNOME's dark style is off and the light style on: the
 // stylesheet's light rules.
 const LIGHT_STYLE = 'borshevik-glass-light';
@@ -83,6 +88,13 @@ class Glass extends St.Widget {
 
 const isGnomeVeil = c => c?.red === 0 && c.green === 0 && c.blue === 0 && c.alpha > 0;
 
+// An open folder's card: GNOME's St.BoxLayout styled .app-folder-dialog, in the dialog's container.
+const folderCard = dialog => dialog.child?.child ?? null;
+
+// An inline style setting a background colour, at the colour's own alpha or the one given.
+const cssColor = ({red, green, blue, alpha}, opacity = alpha / 255) =>
+    `background-color: rgba(${red}, ${green}, ${blue}, ${opacity});`;
+
 export default class BorshevikGlassExtension extends Extension {
     enable() {
         this._actors = [];
@@ -90,11 +102,15 @@ export default class BorshevikGlassExtension extends Extension {
         this._gnomeSessionScheme = null;
         this._settings = this.getSettings();
 
+        // GNOME's alpha of each open folder's veil, for repainting it with a new tint.
+        this._folderShades = new WeakMap();
+
         // Hold no picture: their theme nodes are where colours written in the
-        // stylesheet are read — the folder veil's, the tint's base colour of the
-        // current case, and GNOME's accent colour.
+        // stylesheet are read — the folder veil's, the folder card's, the tint's
+        // base colour of the current case, and GNOME's accent colour.
         this._probes = {
             veil: new St.Widget({style_class: 'borshevik-glass-folder-veil', visible: false}),
+            card: new St.Widget({style_class: 'app-folder-dialog', visible: false}),
             tint: new St.Widget({style_class: 'borshevik-glass-tint', visible: false}),
             accent: new St.Widget({style_class: 'borshevik-glass-accent', visible: false}),
         };
@@ -129,9 +145,7 @@ export default class BorshevikGlassExtension extends Extension {
         this._syncSessionScheme();
         this._syncScheme();
         this._build();
-        Main.layoutManager.overviewGroup.get_children()
-            .filter(child => child instanceof AppDisplay.AppFolderDialog)
-            .forEach(dialog => this._watchFolder(dialog));
+        this._folders().forEach(dialog => this._watchFolder(dialog));
     }
 
     disable() {
@@ -142,12 +156,12 @@ export default class BorshevikGlassExtension extends Extension {
         St.Settings.get().disconnectObject(this);
         Main.sessionMode.disconnectObject(this);
         this._settings.disconnectObject(this);
-        Main.layoutManager.overviewGroup.get_children()
-            .filter(child => child instanceof AppDisplay.AppFolderDialog)
-            .forEach(dialog => {
-                dialog.disconnectObject(this);
-                dialog.remove_effect_by_name(FOLDER_BLUR);
-            });
+        this._folders().forEach(dialog => {
+            dialog.disconnectObject(this);
+            dialog.remove_effect_by_name(FOLDER_BLUR);
+            folderCard(dialog)?.set_style(null);
+        });
+        this._folderShades = null;
 
         if (this._gnomeSessionScheme !== null && OWN_SESSION_SCHEMES.includes(Main.sessionMode.colorScheme)) {
             Main.sessionMode.colorScheme = this._gnomeSessionScheme;
@@ -192,21 +206,48 @@ export default class BorshevikGlassExtension extends Extension {
         this._applyTint();
     }
 
-    // One colour on every tint: the case's base colour from the stylesheet,
-    // mixed with GNOME's accent colour by the accent amount, at the case's depth.
+    // A colour of the stylesheet's mixed with GNOME's accent colour by the
+    // accent amount, or by that share of it; its alpha is kept.
+    _mix(color, share = 1) {
+        const accent = this._probes.accent.get_theme_node().get_background_color();
+        const amount = this._settings.get_boolean('accent-tint')
+            ? share * this._settings.get_int('accent-amount') / 100 : 0;
+        const [red, green, blue] = ['red', 'green', 'blue']
+            .map(c => Math.round(color[c] * (1 - amount) + accent[c] * amount));
+        return new Cogl.Color({red, green, blue, alpha: color.alpha});
+    }
+
+    // The tint — the case's base colour at the case's depth — mixed with the
+    // accent, and an open folder's card and veil, which follow the case.
     _applyTint() {
         if (!this._glasses.length)
             return;
-        const base = this._probes.tint.get_theme_node().get_background_color();
-        const accent = this._probes.accent.get_theme_node().get_background_color();
         const dark = !Main.layoutManager.uiGroup.has_style_class_name(LIGHT_STYLE);
         const depth = this._settings.get_int(dark ? 'dark-depth' : 'light-depth') / 100;
-        const amount = this._settings.get_boolean('accent-tint')
-            ? this._settings.get_int('accent-amount') / 100 : 0;
-        const [red, green, blue] = ['red', 'green', 'blue']
-            .map(c => Math.round(base[c] * (1 - amount) + accent[c] * amount));
-        const style = `background-color: rgba(${red}, ${green}, ${blue}, ${depth});`;
+        const style = cssColor(this._mix(this._probes.tint.get_theme_node().get_background_color()), depth);
         this._glasses.forEach(glass => glass.tint.set_style(style));
+
+        this._folders().forEach(dialog => {
+            this._paintFolderCard(dialog);
+            const shade = this._folderShades.get(dialog);
+            if (shade !== undefined && !dialog.get_transition('background-color') &&
+                dialog.background_color.alpha > 0)
+                dialog.background_color = this._veil(shade);
+        });
+    }
+
+    _folders() {
+        return Main.layoutManager.overviewGroup.get_children()
+            .filter(child => child instanceof AppDisplay.AppFolderDialog);
+    }
+
+    // The card is drawn by GNOME from the stylesheet; its colour is set inline,
+    // the stylesheet's mixed with a share of the glass's accent amount.
+    _paintFolderCard(dialog) {
+        const dark = !Main.layoutManager.uiGroup.has_style_class_name(LIGHT_STYLE);
+        const share = FOLDER_CARD_ACCENT_SHARE[dark ? 'dark' : 'light'];
+        folderCard(dialog)?.set_style(
+            cssColor(this._mix(this._probes.card.get_theme_node().get_background_color(), share)));
     }
 
     _rebuild() {
@@ -219,6 +260,7 @@ export default class BorshevikGlassExtension extends Extension {
         this._actors = [];
         this._glasses = [];
         this._overviewGlass = null;
+        this._panelGlass = null;
         this._gapGlasses = [];
     }
 
@@ -244,7 +286,7 @@ export default class BorshevikGlassExtension extends Extension {
             for (const property of ['visible', 'opacity', 'translation-y'])
                 panelBox.bind_property(property, strip, property, GObject.BindingFlags.SYNC_CREATE);
 
-            const panelGlass = glass(primaryMonitor);
+            const panelGlass = this._panelGlass = glass(primaryMonitor);
             panelGlass.set_position(0, 0);
             strip.add_child(panelGlass);
 
@@ -286,6 +328,7 @@ export default class BorshevikGlassExtension extends Extension {
     // the folder is blurred by as much as it is veiled, so the blur comes and
     // goes with GNOME's animation and is off whenever there is no veil.
     _watchFolder(dialog) {
+        this._paintFolderCard(dialog);
         if (!dialog.get_effect(FOLDER_BLUR)) {
             dialog.add_effect_with_name(FOLDER_BLUR, new Shell.BlurEffect({
                 mode: Shell.BlurMode.BACKGROUND,
@@ -299,9 +342,12 @@ export default class BorshevikGlassExtension extends Extension {
             const transition = dialog.get_transition('background-color');
             if (transition) {
                 const target = transition.get_interval().peek_final_value();
-                if (isGnomeVeil(target))
+                if (isGnomeVeil(target)) {
+                    this._folderShades.set(dialog, target.alpha);
                     transition.set_to(this._veil(target.alpha));
+                }
             } else if (isGnomeVeil(dialog.background_color)) {
+                this._folderShades.set(dialog, dialog.background_color.alpha);
                 dialog.background_color = this._veil(dialog.background_color.alpha);
                 return; // setting it notified again, and that call syncs the blur
             }
@@ -316,6 +362,13 @@ export default class BorshevikGlassExtension extends Extension {
         const {scaleFactor} = St.ThemeContext.get_for_stage(global.stage);
         blur.radius = Math.round(BLUR_RADIUS * scaleFactor * share);
         blur.enabled = blur.radius > 0;
+
+        // The panel's glass lies above the overview, the folder's veil and blur
+        // included, and would leave the panel bright over a veiled overview; while
+        // a folder is veiled it is hidden, and the panel shows the overview's glass
+        // — the same glass in the same place — veiled with the rest.
+        if (this._panelGlass)
+            this._panelGlass.visible = !this._folders().some(d => d.background_color.alpha > 0);
     }
 
     _veil(gnomeAlpha) {

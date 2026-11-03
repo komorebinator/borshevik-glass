@@ -134,7 +134,7 @@ export const scenarios = [
             // a light glassy card over the veiled, blurred overview; near its top corner
             // nothing of the grid lies behind it
             h.expectColour('open folder', shot.region(spot),
-                h.over(h.over(h.glass('A'), h.veil('light')), [250, 250, 251, 0.6]), 15);
+                h.over(h.over(h.glass('A'), h.veil('light')), h.folderCard()), 15);
             // the wallpaper's glass is a flat field, so blurring it again leaves its colour
             h.expectColour('overview behind the folder', shot.region(h.besideFolder()),
                 h.over(h.glass('A'), h.veil('light')));
@@ -166,6 +166,35 @@ export const scenarios = [
             h.key('esc');
             h.sleep(1.5);
             h.expectFolderBlur(false);
+            h.expectColour('panel strip', h.shot().region(h.panelStrip()), h.glass('A'));
+        },
+    },
+    {
+        path: 'folder-over-blur#folder-accent',
+        run(h) {
+            openFolder(h);
+            const withAccent = h.folderCard();
+            // the veil is the stylesheet's, with no accent in it, over the tinted glass
+            h.expectColour('overview behind the folder', h.shot().region(h.besideFolder()),
+                h.over(h.glass('A'), h.veil('dark')), 4);
+            h.setSetting('accent-tint', false);
+            const plain = h.folderCard();
+            const base = h.css('dark', 'app-folder-dialog');
+            if (Math.max(...plain.slice(0, 3).map((v, c) => Math.abs(v - base[c]))) > 1)
+                h.fail(`with the accent tint off the card is ${plain}, not the stylesheet's ${base}`);
+            if (withAccent.slice(0, 3).every((v, c) => Math.abs(v - plain[c]) <= 1))
+                h.fail(`the accent tint changed nothing on the card: ${withAccent} against ${plain}`);
+            h.expectColour('overview behind the folder', h.shot().region(h.besideFolder()),
+                h.over(h.glass('A'), h.veil('dark')), 4);
+        },
+    },
+    {
+        path: 'folder-over-blur#panel-veiled',
+        run(h) {
+            openFolder(h);
+            // the panel shows the overview's glass, veiled and blurred with the rest
+            h.expectColour('panel strip', h.shot().region(h.panelStrip()),
+                h.over(h.glass('A'), h.veil('dark')), 6);
         },
     },
     {
