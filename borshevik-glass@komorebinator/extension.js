@@ -23,6 +23,9 @@ const WORKSPACE_ANIMATION_STYLE = 'workspace-animation';
 // icon is dragged over the folder is lighter, and ours is scaled in proportion.
 const GNOME_VEIL_ALPHA = 204;
 
+// The name of the blur behind an open folder, on GNOME's folder dialog.
+const FOLDER_BLUR = 'borshevik-glass-folder-blur';
+
 // On Main.uiGroup while GNOME's dark style is off: the stylesheet's light rules.
 const LIGHT_STYLE = 'borshevik-glass-light';
 
@@ -115,7 +118,11 @@ export default class BorshevikGlassExtension extends Extension {
         Main.sessionMode.disconnectObject(this);
         Main.overview.disconnectObject(this);
         Main.layoutManager.overviewGroup.get_children()
-            .forEach(child => child.disconnectObject?.(this));
+            .filter(child => child instanceof AppDisplay.AppFolderDialog)
+            .forEach(dialog => {
+                dialog.disconnectObject(this);
+                dialog.remove_effect_by_name(FOLDER_BLUR);
+            });
 
         if (this._gnomeSessionScheme !== null && Main.sessionMode.colorScheme === LIGHT_SESSION_SCHEME) {
             Main.sessionMode.colorScheme = this._gnomeSessionScheme;
@@ -228,8 +235,19 @@ export default class BorshevikGlassExtension extends Extension {
 
     // GNOME eases a folder dialog's background_color to its black veil as the
     // folder opens; the running transition is retargeted to ours, or, when GNOME
-    // set the colour without animating, ours is set at once.
+    // set the colour without animating, ours is set at once. The overview behind
+    // the folder is blurred by as much as it is veiled, so the blur comes and
+    // goes with GNOME's animation and is off whenever there is no veil.
     _watchFolder(dialog) {
+        if (!dialog.get_effect(FOLDER_BLUR)) {
+            dialog.add_effect_with_name(FOLDER_BLUR, new Shell.BlurEffect({
+                mode: Shell.BlurMode.BACKGROUND,
+                brightness: 1,
+                radius: 0,
+                enabled: false,
+            }));
+        }
+
         dialog.connectObject('notify::background-color', () => {
             const transition = dialog.get_transition('background-color');
             if (transition) {
@@ -238,8 +256,19 @@ export default class BorshevikGlassExtension extends Extension {
                     transition.set_to(this._veil(target.alpha));
             } else if (isGnomeVeil(dialog.background_color)) {
                 dialog.background_color = this._veil(dialog.background_color.alpha);
+                return; // setting it notified again, and that call syncs the blur
             }
+            this._syncFolderBlur(dialog);
         }, this);
+    }
+
+    _syncFolderBlur(dialog) {
+        const blur = dialog.get_effect(FOLDER_BLUR);
+        const full = this._veil(GNOME_VEIL_ALPHA).alpha;
+        const share = full > 0 ? Math.min(1, dialog.background_color.alpha / full) : 0;
+        const {scaleFactor} = St.ThemeContext.get_for_stage(global.stage);
+        blur.radius = Math.round(BLUR_RADIUS * scaleFactor * share);
+        blur.enabled = blur.radius > 0;
     }
 
     _veil(gnomeAlpha) {

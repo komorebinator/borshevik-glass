@@ -132,8 +132,8 @@
   color: rgba(255, 255, 255, 0.65);
 }
 
-/* An open folder is not blurred again under it: a darker, denser tint
-   keeps the grid behind from competing with the folder's own icons. */
+/* An open folder over the blurred overview: a darker, denser tint than the
+   glass, so it reads as a card of its own. */
 .app-folder-dialog {
   background-color: rgba(20, 22, 26, 0.85);
 }
@@ -355,8 +355,8 @@
   box-shadow: inset 0 0 0 100px rgba(34, 34, 38, 0.32);
 }
 
-/* An open folder is not blurred again under it: a near-opaque light grey
-   keeps the grid behind from competing with the folder's own icons. */
+/* An open folder over the blurred overview: glassy, the blur behind keeping
+   the grid from competing with the folder's own icons. */
 .borshevik-glass-light .app-folder-dialog {
-  background-color: rgba(235, 235, 237, 0.95);
+  background-color: rgba(250, 250, 251, 0.6);
 }

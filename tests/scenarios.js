@@ -123,22 +123,26 @@ export const scenarios = [
         },
     },
     {
-        path: 'folder-without-second-blur#folder-open',
+        path: 'folder-over-blur#folder-open',
         run(h) {
             h.scheme('light');
             openFolder(h);
             const shot = h.shot();
             const box = folderBox(h);
             const spot = {x: box.x + box.width - 100, y: box.y + 28, width: 4, height: 4};
-            // over the grid, not blurred again: dense enough that what is behind barely shows
-            h.expectColour('open folder', shot.region(spot), h.over([128, 128, 128], [235, 235, 237, 0.95]), 12);
-            h.expectColour('overview behind the folder', shot.region(h.cornerBottomLeft()),
+            // a light glassy card over the veiled, blurred overview; near its top corner
+            // nothing of the grid lies behind it
+            h.expectColour('open folder', shot.region(spot),
+                h.over(h.over(h.glass('light', 'A'), h.veil('light')), [250, 250, 251, 0.6]), 15);
+            // the wallpaper's glass is a flat field, so blurring it again leaves its colour
+            h.expectColour('overview behind the folder', shot.region(h.besideFolder()),
                 h.over(h.glass('light', 'A'), h.veil('light')));
+            h.expectFolderBlur(true);
             h.expectNoDynamicBlur();
         },
     },
     {
-        path: 'folder-without-second-blur#folder-dark-veil',
+        path: 'folder-over-blur#folder-dark-veil',
         run(h) {
             // GNOME inhibits animations in the test machine, which has no GPU; they are
             // let through here, so the veil is set by a running transition, as on real
@@ -146,11 +150,21 @@ export const scenarios = [
             h.eval(`imports.gi.St.Settings.get().uninhibit_animations(); 'ok'`);
             try {
                 openFolder(h);
-                h.expectColour('overview behind the folder', h.shot().region(h.cornerBottomLeft()),
+                h.expectColour('overview behind the folder', h.shot().region(h.besideFolder()),
                     h.over(h.glass('dark', 'A'), h.veil('dark')));
+                h.expectFolderBlur(true);
             } finally {
                 h.eval(`imports.gi.St.Settings.get().inhibit_animations(); 'ok'`);
             }
+        },
+    },
+    {
+        path: 'folder-over-blur#folder-closed',
+        run(h) {
+            openFolder(h);
+            h.key('esc');
+            h.sleep(1.5);
+            h.expectFolderBlur(false);
         },
     },
     {
@@ -290,6 +304,9 @@ export const scenarios = [
         path: 'disable-restores#disable',
         run(h) {
             h.setEnabled(false);
+            // the Workspace Manager opens the overview on an empty workspace by itself
+            h.eval('Main.overview.hide(); "ok"');
+            h.sleep(1.5);
             h.expectColour('panel strip', h.shot().region(h.panelStrip()), [0, 0, 0], 4);
             h.key('super');
             h.waitFor(OVERVIEW_JS);

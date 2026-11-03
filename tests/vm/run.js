@@ -182,6 +182,21 @@ function helpers(scenario) {
                 width: Math.floor(panel.width * 0.15), height: panel.height - 6,
             };
         },
+        // left of an open folder, above the dash, clear of the screen's edge, where a
+        // blur would pull in what lies beyond it
+        besideFolder() {
+            const height = Number(h.eval('global.stage.height'));
+            return {x: 60, y: height - 160, width: 40, height: 40};
+        },
+        // whether the blur behind a folder is on: on the open one, on none when all are closed
+        expectFolderBlur(open) {
+            const state = JSON.parse(h.eval(`JSON.stringify(Main.layoutManager.overviewGroup.get_children()
+                .map(c => [c.visible, c.get_effect?.('borshevik-glass-folder-blur')])
+                .filter(([, e]) => e).map(([visible, e]) => ({visible, enabled: e.enabled, radius: e.radius})))`));
+            const on = state.filter(s => s.enabled);
+            if (open ? !on.some(s => s.visible && s.radius > 0) : on.length > 0)
+                h.fail(`the blur behind folders is not what it should be ${open ? 'with one open' : 'with none open'}: ${JSON.stringify(state)}`);
+        },
         cornerBottomLeft() {
             // the stage's own transformed size is not its size; width and height are
             const height = Number(h.eval('global.stage.height'));
