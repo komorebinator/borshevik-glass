@@ -45,10 +45,16 @@
 
 /* ---- Dark ---- */
 
-/* The tint over the blurred wallpaper: the picture Borshevik's Blur my Shell
-   setup drew, its brightness 0.6 folded into the opacity. */
+/* The tint's base colour in the dark case. The extension reads it, mixes in
+   GNOME's accent colour and sets the depth from the settings, so only the
+   colour counts here. */
 .borshevik-glass-tint {
-  background-color: rgba(0, 3, 4, 0.8);
+  background-color: rgb(0, 3, 4);
+}
+
+/* GNOME's accent colour, read by the extension for the tint. */
+.borshevik-glass-accent {
+  background-color: -st-accent-color;
 }
 
 /* Surfaces on the glass: translucent instead of GNOME's opaque grey. */
@@ -148,17 +154,11 @@
 
 /* ---- Light ---- */
 
-/* The tint over the blurred wallpaper in the overview and the workspace gap:
-   barely lighter than the wallpaper itself. */
+/* The tint's base colour in the light case, GNOME's light panel colour. */
 .borshevik-glass-light .borshevik-glass-tint {
-  background-color: rgba(250, 250, 251, 0.15);
+  background-color: rgb(250, 250, 251);
 }
 
-/* The panel's own tint, lighter than the overview's: GNOME's light panel
-   colour, the wallpaper showing through. */
-.borshevik-glass-light .borshevik-glass-panel-tint {
-  background-color: rgba(250, 250, 251, 0.75);
-}
 
 .borshevik-glass-light .borshevik-glass-folder-veil {
   background-color: rgba(0, 3, 4, 0.1);

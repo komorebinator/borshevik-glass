@@ -6,5 +6,28 @@
       <summary>Light style</summary>
       <description>Whether the glass, the panel and GNOME's menus turn light while GNOME's dark style is off. Off: always dark, prefer-light included.</description>
     </key>
+    <key name="accent-tint" type="b">
+      <default>true</default>
+      <summary>Accent tint</summary>
+      <description>Whether GNOME's accent colour is mixed into the glass's tint.</description>
+    </key>
+    <key name="accent-amount" type="i">
+      <range min="5" max="30"/>
+      <default>15</default>
+      <summary>Accent amount</summary>
+      <description>How much of the accent colour is mixed into the tint, in per cent.</description>
+    </key>
+    <key name="dark-depth" type="i">
+      <range min="0" max="100"/>
+      <default>80</default>
+      <summary>Dark depth</summary>
+      <description>The opacity of the dark tint over the blurred wallpaper, in per cent.</description>
+    </key>
+    <key name="light-depth" type="i">
+      <range min="0" max="100"/>
+      <default>45</default>
+      <summary>Light depth</summary>
+      <description>The opacity of the light tint over the blurred wallpaper, in per cent.</description>
+    </key>
   </schema>
 </schemalist>

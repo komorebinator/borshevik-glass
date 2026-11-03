@@ -32,8 +32,9 @@ export const scenarios = [
     {
         path: 'frosted-surfaces#panel-on-desktop',
         run(h) {
+            h.expectTintCase('dark');
             const panel = h.panelStrip();
-            h.expectColour('panel strip', h.shot().region(panel), h.glass('dark', 'A', 'panel'));
+            h.expectColour('panel strip', h.shot().region(panel), h.glass('A'));
             h.expectBlurred('panel strip', h.lastShot.region(panel));
         },
     },
@@ -42,11 +43,11 @@ export const scenarios = [
         run(h) {
             h.key('super');
             h.waitFor(OVERVIEW_JS);
-            h.expectColour('window picker background', h.shot().region(h.cornerBottomLeft()), h.glass('dark', 'A'));
+            h.expectColour('window picker background', h.shot().region(h.cornerBottomLeft()), h.glass('A'));
             h.expectBlurred('window picker background', h.lastShot.region(h.cornerBottomLeft()));
             h.eval('Main.overview.dash.showAppsButton.checked = true');
             h.sleep(1.5);
-            h.expectColour('app grid background', h.shot().region(h.cornerBottomLeft()), h.glass('dark', 'A'));
+            h.expectColour('app grid background', h.shot().region(h.cornerBottomLeft()), h.glass('A'));
         },
     },
     {
@@ -105,7 +106,7 @@ export const scenarios = [
             // inside its left padding, at mid-height: background, no icon
             const spot = {x: dash.x + 4, y: dash.y + Math.floor(dash.height / 2) - 2, width: 4, height: 4};
             h.expectColour('dash background', h.shot().region(spot),
-                h.over(h.glass('dark', 'A'), [100, 100, 100, 0.35]));
+                h.over(h.glass('A'), [100, 100, 100, 0.35]));
         },
     },
     {
@@ -118,7 +119,7 @@ export const scenarios = [
             const entry = h.actorBox('Main.overview.searchEntry');
             const spot = {x: entry.x + entry.width - 40, y: entry.y + Math.floor(entry.height / 2) - 2, width: 4, height: 4};
             h.expectColour('search entry', h.shot().region(spot),
-                h.over(h.glass('dark', 'A'), [100, 100, 100, 0.35]));
+                h.over(h.glass('A'), [100, 100, 100, 0.35]));
             h.note('whether the results read clearly is for the author to judge');
         },
     },
@@ -133,10 +134,10 @@ export const scenarios = [
             // a light glassy card over the veiled, blurred overview; near its top corner
             // nothing of the grid lies behind it
             h.expectColour('open folder', shot.region(spot),
-                h.over(h.over(h.glass('light', 'A'), h.veil('light')), [250, 250, 251, 0.6]), 15);
+                h.over(h.over(h.glass('A'), h.veil('light')), [250, 250, 251, 0.6]), 15);
             // the wallpaper's glass is a flat field, so blurring it again leaves its colour
             h.expectColour('overview behind the folder', shot.region(h.besideFolder()),
-                h.over(h.glass('light', 'A'), h.veil('light')));
+                h.over(h.glass('A'), h.veil('light')));
             h.expectFolderBlur(true);
             h.expectNoDynamicBlur();
         },
@@ -151,7 +152,7 @@ export const scenarios = [
             try {
                 openFolder(h);
                 h.expectColour('overview behind the folder', h.shot().region(h.besideFolder()),
-                    h.over(h.glass('dark', 'A'), h.veil('dark')));
+                    h.over(h.glass('A'), h.veil('dark')));
                 h.expectFolderBlur(true);
             } finally {
                 h.eval(`imports.gi.St.Settings.get().inhibit_animations(); 'ok'`);
@@ -187,14 +188,14 @@ export const scenarios = [
             h.eval('Main.overview.dash.showAppsButton.checked = true');
             h.sleep(1.5);
             h.scheme('light');
+            h.expectTintCase('light');
             const shot = h.shot();
-            // in the overview the panel's own glass has faded out: it shows the overview's
-            h.expectColour('panel strip', shot.region(h.panelStrip()), h.glass('light', 'A'));
-            h.expectColour('app grid background', shot.region(h.cornerBottomLeft()), h.glass('light', 'A'));
+            h.expectColour('panel strip', shot.region(h.panelStrip()), h.glass('A'));
+            h.expectColour('app grid background', shot.region(h.cornerBottomLeft()), h.glass('A'));
             const dash = h.actorBox('Main.overview.dash._background');
             const spot = {x: dash.x + 4, y: dash.y + Math.floor(dash.height / 2) - 2, width: 4, height: 4};
             h.expectColour('dash background', shot.region(spot),
-                h.over(h.glass('light', 'A'), [255, 255, 255, 0.5]));
+                h.over(h.glass('A'), [255, 255, 255, 0.5]));
             // GNOME's own variant is still dark: its white clock must have been made dark
             const clock = shot.region(h.actorBox('Main.panel.statusArea.dateMenu._clockDisplay'));
             if (Math.min(...clock.darkest) > 100)
@@ -212,7 +213,8 @@ export const scenarios = [
         path: 'follows-colour-scheme#prefer-light',
         run(h) {
             h.scheme('light-only');
-            h.expectColour('panel strip', h.shot().region(h.panelStrip()), h.glass('light', 'A', 'panel'));
+            h.expectTintCase('light');
+            h.expectColour('panel strip', h.shot().region(h.panelStrip()), h.glass('A'));
         },
     },
     {
@@ -220,17 +222,18 @@ export const scenarios = [
         run(h) {
             h.scheme('light');
             h.scheme('dark');
-            h.expectColour('panel strip', h.shot().region(h.panelStrip()), h.glass('dark', 'A', 'panel'));
+            h.expectTintCase('dark');
+            h.expectColour('panel strip', h.shot().region(h.panelStrip()), h.glass('A'));
         },
     },
     {
         path: 'follows-wallpaper#new-wallpaper',
         run(h) {
             h.wallpaper('B');
-            h.expectColour('panel strip', h.shot().region(h.panelStrip()), h.glass('dark', 'B', 'panel'));
+            h.expectColour('panel strip', h.shot().region(h.panelStrip()), h.glass('B'));
             h.key('super');
             h.waitFor(OVERVIEW_JS);
-            h.expectColour('window picker background', h.shot().region(h.cornerBottomLeft()), h.glass('dark', 'B'));
+            h.expectColour('window picker background', h.shot().region(h.cornerBottomLeft()), h.glass('B'));
         },
     },
     {
@@ -298,7 +301,8 @@ export const scenarios = [
         run(h) {
             h.scheme('light');
             h.setLightStyle(false);
-            h.expectColour('panel strip', h.shot().region(h.panelStrip()), h.glass('dark', 'A', 'panel'));
+            h.expectTintCase('dark');
+            h.expectColour('panel strip', h.shot().region(h.panelStrip()), h.glass('A'));
             h.expectQuickSettings('dark');
         },
     },
@@ -307,8 +311,36 @@ export const scenarios = [
         run(h) {
             h.setLightStyle(false);
             h.scheme('light-only');
-            h.expectColour('panel strip', h.shot().region(h.panelStrip()), h.glass('dark', 'A', 'panel'));
+            h.expectTintCase('dark');
+            h.expectColour('panel strip', h.shot().region(h.panelStrip()), h.glass('A'));
             h.expectQuickSettings('dark');
+        },
+    },
+    {
+        path: 'tint-tunable#accent-off',
+        run(h) {
+            const withAccent = h.tint();
+            h.setSetting('accent-tint', false);
+            const plain = h.tint();
+            // the dark case's base colour, rgb(0, 3, 4), at the default depth
+            if (Math.max(...plain.slice(0, 3).map((v, c) => Math.abs(v - [0, 3, 4][c]))) > 1)
+                h.fail(`with the accent tint off the tint is ${plain}, not the plain base colour`);
+            if (withAccent.slice(0, 3).every((v, c) => Math.abs(v - plain[c]) <= 1))
+                h.fail(`the accent tint changed nothing: ${withAccent} against ${plain}`);
+            h.expectColour('panel strip', h.shot().region(h.panelStrip()), h.glass('A'));
+        },
+    },
+    {
+        path: 'tint-tunable#depth-changed',
+        run(h) {
+            h.setSetting('dark-depth', 50);
+            const tint = h.tint();
+            if (Math.abs(tint[3] - 0.5) > 0.01)
+                h.fail(`with the dark depth at 50 the tint's opacity is ${tint[3]}`);
+            h.expectColour('panel strip', h.shot().region(h.panelStrip()), h.glass('A'));
+            h.key('super');
+            h.waitFor(OVERVIEW_JS);
+            h.expectColour('window picker background', h.shot().region(h.cornerBottomLeft()), h.glass('A'));
         },
     },
     {

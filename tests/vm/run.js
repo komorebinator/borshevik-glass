@@ -44,9 +44,7 @@ function run(argv, input = null) {
 
 const vm = (...args) => run(['bash', vmScript, ...args]);
 
-// The colour a rule of the stylesheet gives a style class, in the dark or the light
-// case; a class with no light rule of its own (the panel's tint in the dark case) is
-// asked for by the class it falls back on.
+// The colour a rule of the stylesheet gives a style class, in the dark or the light case.
 function cssColour(scheme, styleClass) {
     const css = new TextDecoder().decode(GLib.file_get_contents(`${repo}/${UUID}/stylesheet.css`)[1]);
     const selector = scheme === 'light'
@@ -57,8 +55,6 @@ function cssColour(scheme, styleClass) {
     return m[1].split(',').map(Number);
 }
 
-const tintOf = (scheme, surface) => cssColour(scheme,
-    surface === 'panel' && scheme === 'light' ? 'borshevik-glass-panel-tint' : 'borshevik-glass-tint');
 
 function makeWallpaper(name) {
     const [a, b] = WALLPAPERS[name];
@@ -151,9 +147,24 @@ function helpers(scenario) {
         wallpaper(name) {
             vm('wallpaper', makeWallpaper(name));
         },
-        setLightStyle(on) {
-            vm('ssh', `uid=$(id -u tester); runuser -u tester -- env DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$uid/bus dconf ${on === null ? 'reset' : 'write'} /org/gnome/shell/extensions/borshevik-glass/light-style ${on === null ? '' : on}`);
+        // one of the extension's settings, as the preferences write it; null resets it
+        setSetting(key, value) {
+            vm('ssh', `uid=$(id -u tester); runuser -u tester -- env DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$uid/bus dconf ${value === null ? 'reset' : 'write'} /org/gnome/shell/extensions/borshevik-glass/${key} ${value === null ? '' : value}`);
             h.sleep(1.5);
+        },
+        setLightStyle(on) {
+            h.setSetting('light-style', on);
+        },
+        // the tint the extension has set on the glass, as [r, g, b, alpha]: made from the
+        // settings and GNOME's accent colour, so read from the shell, not the stylesheet
+        tint() {
+            return JSON.parse(h.eval(`(() => {
+                const t = global.stage.get_children().flatMap(function walk(a) {
+                    return [a, ...a.get_children().flatMap(walk)];
+                }).find(a => a.has_style_class_name?.('borshevik-glass-tint') && a.get_parent()?.name === 'borshevik-glass');
+                const c = t.get_theme_node().get_background_color();
+                return JSON.stringify([c.red, c.green, c.blue, c.alpha / 255]);
+            })()`));
         },
         // GNOME's Quick Settings, in which of its two variants: light, or dark
         expectQuickSettings(variant) {
@@ -222,9 +233,17 @@ function helpers(scenario) {
         over(below, [r, g, b, alpha]) {
             return below.map((v, c) => v * (1 - alpha) + [r, g, b][c] * alpha);
         },
-        glass(scheme, wallpaper, surface = 'overview') {
+        // whether the tint is of the dark case or the light one, whatever accent is in it
+        expectTintCase(scheme) {
+            const rgb = h.tint().slice(0, 3);
+            if (scheme === 'dark' ? Math.max(...rgb) > 80 : Math.min(...rgb) < 180)
+                h.fail(`the tint ${rgb} is not of the ${scheme} case`);
+        },
+        // the blurred wallpaper under the tint the glass has now, in whichever case
+        // the scenario has put the shell into
+        glass(wallpaper) {
             const [a, b] = WALLPAPERS[wallpaper];
-            return h.over(a.map((v, c) => (v + b[c]) / 2), tintOf(scheme, surface));
+            return h.over(a.map((v, c) => (v + b[c]) / 2), h.tint());
         },
         veil(scheme) {
             return cssColour(scheme, 'borshevik-glass-folder-veil');
@@ -264,7 +283,7 @@ function reset(h) {
         global.workspace_manager.get_workspace_by_index(0).activate(global.get_current_time()); 'ok'`);
     h.eval(`Main.extensionManager.lookup('${UUID}')?.state === 1 ? 'on' :
         (Main.extensionManager.enableExtension('${UUID}'), 'enabled')`);
-    h.setLightStyle(null);
+    vm('ssh', `uid=$(id -u tester); runuser -u tester -- env DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$uid/bus dconf reset -f /org/gnome/shell/extensions/borshevik-glass/`);
     h.scheme('dark');
     h.wallpaper('A');
     h.sleep(1.5);
