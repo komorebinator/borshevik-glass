@@ -44,14 +44,21 @@ function run(argv, input = null) {
 
 const vm = (...args) => run(['bash', vmScript, ...args]);
 
-function tintOf(scheme) {
+// The colour a rule of the stylesheet gives a style class, in the dark or the light
+// case; a class with no light rule of its own (the panel's tint in the dark case) is
+// asked for by the class it falls back on.
+function cssColour(scheme, styleClass) {
     const css = new TextDecoder().decode(GLib.file_get_contents(`${repo}/${UUID}/stylesheet.css`)[1]);
-    const selector = scheme === 'light' ? '\\.borshevik-glass-light \\.borshevik-glass-tint' : '\\n\\.borshevik-glass-tint';
+    const selector = scheme === 'light'
+        ? `\\.borshevik-glass-light \\.${styleClass}` : `\\n\\.${styleClass}`;
     const m = css.match(new RegExp(`${selector}\\s*\\{[^}]*background-color:\\s*rgba\\(([^)]*)\\)`));
     if (!m)
-        throw new Error(`no ${scheme} tint in stylesheet.css`);
+        throw new Error(`no ${scheme} colour for .${styleClass} in stylesheet.css`);
     return m[1].split(',').map(Number);
 }
+
+const tintOf = (scheme, surface) => cssColour(scheme,
+    surface === 'panel' && scheme === 'light' ? 'borshevik-glass-panel-tint' : 'borshevik-glass-tint');
 
 function makeWallpaper(name) {
     const [a, b] = WALLPAPERS[name];
@@ -184,9 +191,12 @@ function helpers(scenario) {
         over(below, [r, g, b, alpha]) {
             return below.map((v, c) => v * (1 - alpha) + [r, g, b][c] * alpha);
         },
-        glass(scheme, wallpaper) {
+        glass(scheme, wallpaper, surface = 'overview') {
             const [a, b] = WALLPAPERS[wallpaper];
-            return h.over(a.map((v, c) => (v + b[c]) / 2), tintOf(scheme));
+            return h.over(a.map((v, c) => (v + b[c]) / 2), tintOf(scheme, surface));
+        },
+        veil(scheme) {
+            return cssColour(scheme, 'borshevik-glass-folder-veil');
         },
         expectColour(what, {mean}, expected, tolerance = 10) {
             const off = Math.max(...mean.map((v, c) => Math.abs(v - expected[c])));

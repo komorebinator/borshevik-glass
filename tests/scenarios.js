@@ -8,12 +8,32 @@
 
 const OVERVIEW_JS = 'Main.overview.visible';
 
+function openFolder(h) {
+    h.key('super');
+    h.waitFor(OVERVIEW_JS);
+    h.eval('Main.overview.dash.showAppsButton.checked = true');
+    h.sleep(1.5);
+    const opened = h.eval(`(() => {
+        const icon = Main.overview._overview.controls._appDisplay._folderIcons?.[0];
+        if (!icon) return 'none';
+        icon.open();
+        return 'opened';
+    })()`);
+    if (opened === 'none')
+        h.skip('the app grid has no folder');
+    h.sleep(1.5);
+}
+
+const folderBox = h => h.actorBox(`global.stage.get_children().flatMap(function walk(a) {
+    return [a, ...a.get_children().flatMap(walk)];
+}).find(a => a.has_style_class_name?.('app-folder-dialog') && a.is_mapped())`);
+
 export const scenarios = [
     {
         path: 'frosted-surfaces#panel-on-desktop',
         run(h) {
             const panel = h.panelStrip();
-            h.expectColour('panel strip', h.shot().region(panel), h.glass('dark', 'A'));
+            h.expectColour('panel strip', h.shot().region(panel), h.glass('dark', 'A', 'panel'));
             h.expectBlurred('panel strip', h.lastShot.region(panel));
         },
     },
@@ -105,26 +125,32 @@ export const scenarios = [
     {
         path: 'folder-without-second-blur#folder-open',
         run(h) {
-            h.key('super');
-            h.waitFor(OVERVIEW_JS);
-            h.eval('Main.overview.dash.showAppsButton.checked = true');
-            h.sleep(1.5);
-            const opened = h.eval(`(() => {
-                const icon = Main.overview._overview.controls._appDisplay._folderIcons?.[0];
-                if (!icon) return 'none';
-                icon.open();
-                return 'opened';
-            })()`);
-            if (opened === 'none')
-                h.skip('the app grid has no folder');
-            h.sleep(1.5);
-            const box = h.actorBox(`global.stage.get_children().flatMap(function walk(a) {
-                return [a, ...a.get_children().flatMap(walk)];
-            }).find(a => a.has_style_class_name?.('app-folder-dialog') && a.is_mapped())`);
+            h.scheme('light');
+            openFolder(h);
+            const shot = h.shot();
+            const box = folderBox(h);
             const spot = {x: box.x + box.width - 100, y: box.y + 28, width: 4, height: 4};
-            // over the grid, not blurred again: a dense tint, so near it whatever is behind
-            h.expectColour('open folder', h.shot().region(spot), h.over([128, 128, 128], [20, 22, 26, 0.85]), 25);
+            // over the grid, not blurred again: dense enough that what is behind barely shows
+            h.expectColour('open folder', shot.region(spot), h.over([128, 128, 128], [235, 235, 237, 0.95]), 12);
+            h.expectColour('overview behind the folder', shot.region(h.cornerBottomLeft()),
+                h.over(h.glass('light', 'A'), h.veil('light')));
             h.expectNoDynamicBlur();
+        },
+    },
+    {
+        path: 'folder-without-second-blur#folder-dark-veil',
+        run(h) {
+            // GNOME inhibits animations in the test machine, which has no GPU; they are
+            // let through here, so the veil is set by a running transition, as on real
+            // hardware, and not at once
+            h.eval(`imports.gi.St.Settings.get().uninhibit_animations(); 'ok'`);
+            try {
+                openFolder(h);
+                h.expectColour('overview behind the folder', h.shot().region(h.cornerBottomLeft()),
+                    h.over(h.glass('dark', 'A'), h.veil('dark')));
+            } finally {
+                h.eval(`imports.gi.St.Settings.get().inhibit_animations(); 'ok'`);
+            }
         },
     },
     {
@@ -148,6 +174,7 @@ export const scenarios = [
             h.sleep(1.5);
             h.scheme('light');
             const shot = h.shot();
+            // in the overview the panel's own glass has faded out: it shows the overview's
             h.expectColour('panel strip', shot.region(h.panelStrip()), h.glass('light', 'A'));
             h.expectColour('app grid background', shot.region(h.cornerBottomLeft()), h.glass('light', 'A'));
             const dash = h.actorBox('Main.overview.dash._background');
@@ -161,10 +188,24 @@ export const scenarios = [
         },
     },
     {
+        path: 'follows-colour-scheme#menus-light',
+        run(h) {
+            h.scheme('light');
+            h.eval('Main.panel.statusArea.quickSettings.menu.open(false)');
+            h.sleep(1.5);
+            const box = h.actorBox('Main.panel.statusArea.quickSettings.menu.box');
+            const spot = {x: box.x + 30, y: box.y + box.height - 12, width: 4, height: 4};
+            const {mean} = h.shot().region(spot);
+            h.eval('Main.panel.statusArea.quickSettings.menu.close(false)');
+            if (Math.min(...mean) < 220)
+                h.fail(`Quick Settings is not GNOME's light one: its background is ${mean.map(Math.round)}`);
+        },
+    },
+    {
         path: 'follows-colour-scheme#prefer-light',
         run(h) {
             h.scheme('light-only');
-            h.expectColour('panel strip', h.shot().region(h.panelStrip()), h.glass('light', 'A'));
+            h.expectColour('panel strip', h.shot().region(h.panelStrip()), h.glass('light', 'A', 'panel'));
         },
     },
     {
@@ -172,14 +213,14 @@ export const scenarios = [
         run(h) {
             h.scheme('light');
             h.scheme('dark');
-            h.expectColour('panel strip', h.shot().region(h.panelStrip()), h.glass('dark', 'A'));
+            h.expectColour('panel strip', h.shot().region(h.panelStrip()), h.glass('dark', 'A', 'panel'));
         },
     },
     {
         path: 'follows-wallpaper#new-wallpaper',
         run(h) {
             h.wallpaper('B');
-            h.expectColour('panel strip', h.shot().region(h.panelStrip()), h.glass('dark', 'B'));
+            h.expectColour('panel strip', h.shot().region(h.panelStrip()), h.glass('dark', 'B', 'panel'));
             h.key('super');
             h.waitFor(OVERVIEW_JS);
             h.expectColour('window picker background', h.shot().region(h.cornerBottomLeft()), h.glass('dark', 'B'));
