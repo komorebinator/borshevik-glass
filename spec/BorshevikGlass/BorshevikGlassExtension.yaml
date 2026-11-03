@@ -1,0 +1,127 @@
+description: "GNOME Shell extension entry point. Lays the wallpaper, blurred, under the surfaces of GNOME Shell that Borshevik gives a frosted look — the top panel, the overview (window picker, app grid and search alike), and the gap between workspaces while they slide — and paints over it a tint from the stylesheet of the current colour scheme, which also restyles what sits on that picture: the dash, the search entry, workspace thumbnails, folder icons and an open app folder. What it covers and how each looks is `behaviour`; why the blur is static and where the cost of it goes is in the guidelines."
+extends: "@Extension"
+target: "@GnomeShell"
+platform: GJS (GNOME Shell 50) — Clutter, Meta, Shell, St, Main, Background
+src: borshevik-glass@komorebinator/extension.js
+guidelines:
+  - "The blur is static: what is blurred is a copy of the wallpaper — a Meta.BackgroundActor that GNOME's own BackgroundManager keeps in step with the wallpaper settings — under Shell.BlurEffect in ACTOR mode, the way GNOME's own lock screen blurs its background. That effect renders its actor once and keeps the result until the actor itself changes, so the blur is computed when the wallpaper, a monitor or the scale factor changes and at no other time; drawing a frame only shows a texture already made. Dynamic blur (Shell.BlurMode.BACKGROUND, or the ext-background-effect-v1 protocol Mutter gained in GNOME 51) would instead copy and blur what is on the screen behind the surface at every repaint of it — the panel repaints with every tick of the clock and change of an indicator — and buys nothing here: Mutter keeps windows out from under the top panel, the overview and the workspace gap show the wallpaper anyway, and a full-screen window hides the panel. The protocol is not even reachable: it is for Wayland clients asking about their own windows, and the panel is an actor inside the shell. Nothing the extension adds is ever blurred dynamically — an open app folder included (`behaviour#folder-without-second-blur`)."
+  - "One blur per monitor and wallpaper. The panel, the overview and the workspace gap of a monitor all show the same blurred picture of that monitor's wallpaper, aligned with the monitor's origin, so where one surface meets another — the panel over the overview — the two pictures line up pixel for pixel and no seam shows. Each surface clips that picture to itself; none blurs it again."
+  - "Blur is neutral in colour and light — Shell.BlurEffect's brightness stays at 1 — and everything that makes the picture dark or light is the tint drawn over it, a translucent St.Widget whose colour comes from the stylesheet. So a change of colour scheme only swaps stylesheets, which GNOME Shell does by itself, and never re-blurs anything. The dark tint is chosen to reproduce what Borshevik's Blur my Shell setup drew (blur at brightness 0.6 under a near-black colour at 0.67), which is the same picture as a near-black tint at about 0.8 over a blur at full brightness."
+  - "Colours live in the stylesheets and nowhere else: stylesheet-dark.css and stylesheet-light.css, which GNOME Shell loads for an extension by the current colour scheme and reloads by itself whenever the scheme changes (Main.getStyleVariant, ExtensionManager._reloadExtensionStylesheets). What the two share is in one file they both import, so a rule about where the tint goes is written once and only the colours differ. GNOME keeps the overview, the dash and app folders dark in its light scheme; the light stylesheet deliberately goes further and makes them light too, with dark labels, so the whole desktop follows the scheme (the author's decision, 2026-11-03). That means restyling text GNOME Shell's own theme colours for a dark background, and those selectors are the ones to check whenever GNOME's theme changes."
+  - "The extension adds actors to GNOME's and restyles GNOME's through its stylesheet; it replaces no method of GNOME Shell. Where something appears only for a moment — the monitor groups of a workspace switch — it is found by watching for it being added to Main.uiGroup by its style class, workspace-animation, rather than by patching WorkspaceAnimationController, so a change inside GNOME's animation code cannot leave a patched method calling into nothing."
+  - "Runs in the user session mode only: metadata.json names no other session mode, so GNOME disables the extension while the screen is locked and enables it again on unlock. The lock screen keeps GNOME's own blur (the author's decision, 2026-11-03), and the panel GNOME shows over it is transparent there anyway. Being enabled again at every unlock means the blur is computed again then, once per monitor, which is the one recurring cost the extension has."
+recipes:
+  - id: run
+    description: "Makes the next GNOME Shell session on this machine run the extension straight from the working tree, so a change can be tried before it is committed. The extension is installed per user as a symlink into the repository; a copy under the same UUID in ~/.local/share takes precedence over one the Borshevik image installs in /usr/share/gnome-shell/extensions, so the session runs the working tree, not the image's copy of `main`."
+    instructions:
+      - "Check ~/.local/share/gnome-shell/extensions/borshevik-glass@komorebinator. If it is missing, create it as a symlink to this repository's borshevik-glass@komorebinator/ directory. If it is a real directory, or a symlink pointing anywhere else, stop and ask — it is an installation someone made on purpose."
+      - "While Borshevik still ships Blur my Shell, disable it for the author's user with `gnome-extensions disable blur-my-shell@aunetx` and say so: the two must not run together (see the project's guideline on replacing it). Re-enabling it is the author's to ask for."
+      - "Check `gnome-extensions info borshevik-glass@komorebinator` and enable it with `gnome-extensions enable` if it is not enabled. A running shell only knows the extensions it found at login, so on a machine that has never had this one both report that it does not exist; then append its uuid to org.gnome.shell `enabled-extensions` with gsettings instead, which the next session reads."
+      - "GNOME Shell on Wayland cannot reload an extension or restart in place: ask the author to log out and back in. Never do it for them — it ends every program in the session, this one included."
+      - "Once they are back, look for errors the extension threw since login in `journalctl -b /usr/bin/gnome-shell`, and report them before the author starts looking."
+behaviour:
+  - id: frosted-surfaces
+    description: "Behind the top panel, the overview — the window picker, the app grid and search results alike — and the gap between workspaces while they slide outside the overview, the user sees the wallpaper of that monitor, blurred, under the scheme's tint, where GNOME draws a solid colour. On a machine with several monitors every monitor's overview and workspace gap shows its own wallpaper; the panel is on the primary monitor only, as GNOME's is. What a surface shows is always the wallpaper, never the windows: nothing behind the panel is ever a window, and in the overview and the gap the windows are drawn above the picture."
+    scenarios:
+      - id: panel-on-desktop
+        given: the desktop with no window open, the dark scheme
+        when: the top panel is looked at
+        then: it shows the wallpaper of the strip it covers, blurred and darkened, instead of GNOME's black, with the panel's text and icons over it
+      - id: overview-and-app-grid
+        given: the dark scheme
+        when: the overview is opened, then the app grid
+        then: both show the whole wallpaper blurred and darkened behind the workspaces and the icons, instead of GNOME's grey
+      - id: workspace-gap
+        given: two workspaces, a window on each, the overview closed
+        when: the user switches to the other workspace with the keyboard
+        then: while the workspaces slide, the gap between them shows the blurred, tinted wallpaper instead of GNOME's grey band, and once the slide ends the desktop is as before
+      - id: second-monitor
+        given: two monitors with different parts of a spanned wallpaper, or different wallpapers
+        when: the overview is opened
+        then: each monitor shows its own wallpaper blurred, and the panel only the primary's
+  - id: dock-and-overview-components
+    description: "What sits on the frosted overview is restyled to sit on glass rather than on GNOME's solid grey: the dash's background, the search entry, workspace thumbnails, folder icons in the app grid, the page arrows and the search results section get a translucent background of the scheme's tint instead of an opaque one, and app icons and dash items lose the square backdrop GNOME gives them, keeping their hover and focus highlight. It is the look Borshevik had with Blur my Shell's dark overview components, carried over in the dark scheme and mirrored in the light one."
+    scenarios:
+      - id: dash
+        given: the overview open, the dark scheme
+        when: the dash is looked at
+        then: its rounded background is translucent, so the blurred wallpaper shows through it, and its icons have no square backdrop until hovered
+      - id: search
+        given: the overview open
+        when: something is typed into the search entry
+        then: the entry and the results section are translucent over the blurred wallpaper and their text reads clearly
+  - id: folder-without-second-blur
+    description: "An open app folder is a translucent panel of the scheme's tint over the overview, opaque enough that the icons of the grid behind it do not compete with the folder's own, but the grid is not blurred under it: blurring what is behind an open dialog is dynamic blur, paid for at every frame for as long as the folder is open, which the extension never does (see the guideline on static blur). Blur my Shell blurred it; the author chose to give that up for the cost (2026-11-03)."
+    scenarios:
+      - id: folder-open
+        given: the app grid with a folder
+        when: the folder is opened
+        then: it opens on a translucent tinted background through which the grid behind is dimly seen, unblurred, and its name entry matches it
+  - id: panel-and-overview-meet
+    description: "The panel keeps its frosted look in the overview. GNOME makes the panel transparent there, and the overview's own picture behind it is the same blur of the same wallpaper under the same tint, so the panel reads as part of the overview with no seam, and opening or closing the overview shows no flash or jump in the strip the panel covers."
+    scenarios:
+      - id: into-overview
+        given: the desktop with no window open
+        when: the overview is opened and closed again
+        then: the strip under the panel looks the same throughout, with no seam between the panel and the overview and no flash while they animate
+  - id: follows-colour-scheme
+    description: "Every surface follows GNOME's colour scheme, as Settings › Appearance and Quick Settings' dark style toggle set it: in the dark scheme a dark tint with light text, in the light scheme a light tint with dark text — the panel as GNOME's light panel already does, and the overview, dash, search and folders too, which GNOME leaves dark (see the guideline on stylesheets). A change of scheme takes effect at once, in the running session, and computes no blur."
+    scenarios:
+      - id: switch-to-light
+        given: the dark scheme, the overview open on the app grid
+        when: the scheme is switched to light in Quick Settings
+        then: the panel, the app grid background, the dash and the search entry turn light with dark labels at once, the wallpaper still blurred behind them, with no relogin
+      - id: switch-to-dark
+        given: the light scheme
+        when: the scheme is switched to dark
+        then: everything goes back to the dark tint with light labels
+  - id: follows-wallpaper
+    description: "A new wallpaper, a monitor added, removed or rearranged, and a new scale factor are picked up while the session runs: the affected monitors' pictures are blurred anew and the surfaces show them, with no relogin. These are the only moments, beside enabling the extension, when anything is blurred."
+    scenarios:
+      - id: new-wallpaper
+        given: the desktop
+        when: the wallpaper is changed in Settings
+        then: the panel shows the new wallpaper blurred within a moment, and so does the overview when opened next
+      - id: monitor-added
+        given: one monitor
+        when: a second monitor is connected
+        then: the overview on the new monitor shows its wallpaper blurred
+  - id: costs-nothing-at-rest
+    description: "While the desktop is in use nothing is blurred: moving and resizing windows, the clock ticking, indicators changing, opening and closing the overview, sliding between workspaces and opening folders all only show pictures already blurred. A session with the extension uses no more GPU time frame to frame than one without it, apart from drawing a few textures."
+    scenarios:
+      - id: clock-tick
+        given: the desktop, the extension enabled and settled
+        when: a few minutes pass, the clock in the panel changing, with the extension enabled and then with it disabled
+        then: gnome-shell's CPU time over the same span is the same either way, within noise — had the panel been blurred at its repaints, every tick of the clock would show
+  - id: rest-left-to-gnome
+    description: "Everything else stays as GNOME draws it: popup menus, Quick Settings, the calendar, notifications, OSDs, dialogs, the window switcher, the screenshot UI, the lock screen and the login screen, and application windows. Blur my Shell had been set up to leave them alone too, the lock screen and screenshot UI aside, which the author chose to give back to GNOME (2026-11-03)."
+    scenarios:
+      - id: menus-untouched
+        given: the extension enabled
+        when: Quick Settings and the calendar are opened
+        then: they look exactly as without the extension
+      - id: lock-screen-is-gnome
+        given: the extension enabled
+        when: the screen is locked
+        then: the lock screen shows GNOME's own blurred wallpaper, and after unlocking the panel and the overview are frosted again
+  - id: disable-restores
+    description: "Disabling the extension gives GNOME's look back entirely and at once: every actor it added is destroyed, its stylesheets unload with it, and no surface is left transparent over nothing."
+    scenarios:
+      - id: disable
+        given: the extension enabled, the overview closed
+        when: the extension is disabled
+        then: the panel is GNOME's solid colour again, and the overview, dash and folders look as GNOME draws them
+components:
+  - id: stylesheets
+    type: "@ConfigFile"
+    format: CSS (GNOME Shell St theming)
+    src:
+      - borshevik-glass@komorebinator/stylesheet-dark.css
+      - borshevik-glass@komorebinator/stylesheet-light.css
+      - borshevik-glass@komorebinator/common.css
+    description: "The tint of each scheme and the restyling of GNOME's own overview, dash, search, folder and panel selectors, as the guideline on stylesheets describes; common.css holds what both schemes share and is imported by both. The light tint is a starting point to be tuned with the author on a real screen."
+  - id: metadata
+    type: "@ConfigFile"
+    format: JSON
+    src: borshevik-glass@komorebinator/metadata.json
+    description: "Extension manifest: GNOME Shell 50, the version Borshevik ships, no session modes beyond the user's, and no preferences."

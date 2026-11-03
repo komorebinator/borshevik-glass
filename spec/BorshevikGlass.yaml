@@ -1,0 +1,24 @@
+name: Borshevik Glass
+description: "GNOME Shell extension for Borshevik Linux — shows the wallpaper, blurred and tinted, behind the top panel, the overview with its app grid and search, the dash, an open app folder and the gap between workspaces while they slide, tinted dark or light to follow GNOME's colour scheme. The blur is static: the wallpaper is blurred once and shown from then on, never what is on the screen at that moment, so it costs nothing frame to frame. It replaces Blur my Shell in Borshevik."
+extends: "@DuckspecProject"
+terms_folder: BorshevikGlass/
+repository: https://github.com/komorebinator/borshevik-glass
+goals:
+  - Give the panel, the overview, the dash and app folders the frosted look Borshevik had with Blur my Shell, without an extension of Blur my Shell's size and settings
+  - Cost nothing while the desktop is in use — no blur computed per frame, nothing redrawn because a window moved or the clock ticked — so a laptop's battery does not pay for the look
+  - Follow GNOME's colour scheme everywhere it draws — dark tint and light text in the dark scheme, light tint and dark text in the light one — and switch the moment the scheme does
+uses:
+  - https://github.com/komorebinator/duckspec
+  - https://github.com/komorebinator/borshevik
+  - https://github.com/komorebinator/borshevik-workspace-manager
+settings:
+  readme: ../README.md
+software:
+  - "@BorshevikGlassExtension"
+guidelines:
+  - "The project is licensed GPL-2.0-or-later, the terms of GNOME Shell itself, as Borshevik's other new extensions are (the author's decision, 2026-11-03). LICENSE holds the GPL-2.0 text, which does not say \"or later\" by itself, so every source file says it with an `SPDX-License-Identifier: GPL-2.0-or-later` line at its top. Blur my Shell is GPL-3.0-only: its code is read to learn where GNOME Shell keeps what is drawn on, never copied, since taking it would bind the whole extension to GPL-3.0."
+  - "Borshevik Glass replaces Blur my Shell in Borshevik in one change of Borshevik's, made once the extension is trusted: list.json gains this extension and loses Blur my Shell together with its default patch, and the image check on its popup blur goes (@GnomeExtensions). Both at once is never shipped: they would each make the panel and the overview transparent and lay their own picture under them, and which one ends up on top depends on the order GNOME enables them in."
+startup:
+  - load
+workflow:
+  type: "@BorshevikGlassWorkflow"
