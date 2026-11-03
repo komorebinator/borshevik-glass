@@ -284,8 +284,11 @@
    in the overview even its light variant does; on light glass they are dark,
    as GNOME's own light panel draws them. Symbolic icons take the button's
    colour, so this darkens them too; icons drawn in a colour of their own do
-   not change. */
+   not change. The panel itself sets the colour too, for what other
+   extensions put on it without a colour of its own: GNOME sets none there,
+   so it would inherit white. */
 .borshevik-glass-light #panel {
+  color: #222226;
   box-shadow: inset 0 -0.5px 0 0 rgba(34, 34, 38, 0.1);
 }
 
