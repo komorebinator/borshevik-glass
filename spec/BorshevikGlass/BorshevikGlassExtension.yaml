@@ -4,11 +4,12 @@ target: "@GnomeShell"
 platform: GJS (GNOME Shell 50) — Clutter, Meta, Shell, St, Main, Background
 src: borshevik-glass@komorebinator/extension.js
 guidelines:
-  - "The blur is static: what is blurred is a copy of the wallpaper — a Meta.BackgroundActor that GNOME's own BackgroundManager keeps in step with the wallpaper settings — under Shell.BlurEffect in ACTOR mode, the way GNOME's own lock screen blurs its background. That effect renders its actor once and keeps the result until the actor itself changes, so the blur is computed when the wallpaper, a monitor or the scale factor changes and at no other time; drawing a frame only shows a texture already made. Dynamic blur (Shell.BlurMode.BACKGROUND, or the ext-background-effect-v1 protocol Mutter gained in GNOME 51) would instead copy and blur what is on the screen behind the surface at every repaint of it — the panel repaints with every tick of the clock and change of an indicator — and buys nothing here: Mutter keeps windows out from under the top panel, the overview and the workspace gap show the wallpaper anyway, and a full-screen window hides the panel. The protocol is not even reachable: it is for Wayland clients asking about their own windows, and the panel is an actor inside the shell. Nothing the extension adds is ever blurred dynamically — an open app folder included (`behaviour#folder-without-second-blur`)."
-  - "One blur per monitor and wallpaper. The panel, the overview and the workspace gap of a monitor all show the same blurred picture of that monitor's wallpaper, aligned with the monitor's origin, so where one surface meets another — the panel over the overview — the two pictures line up pixel for pixel and no seam shows. Each surface clips that picture to itself; none blurs it again."
-  - "Blur is neutral in colour and light — Shell.BlurEffect's brightness stays at 1 — and everything that makes the picture dark or light is the tint drawn over it, a translucent St.Widget whose colour comes from the stylesheet. So a change of colour scheme only swaps stylesheets, which GNOME Shell does by itself, and never re-blurs anything. The dark tint is chosen to reproduce what Borshevik's Blur my Shell setup drew (blur at brightness 0.6 under a near-black colour at 0.67), which is the same picture as a near-black tint at about 0.8 over a blur at full brightness."
-  - "Colours live in the stylesheets and nowhere else: stylesheet-dark.css and stylesheet-light.css, which GNOME Shell loads for an extension by the current colour scheme and reloads by itself whenever the scheme changes (Main.getStyleVariant, ExtensionManager._reloadExtensionStylesheets). What the two share is in one file they both import, so a rule about where the tint goes is written once and only the colours differ. GNOME keeps the overview, the dash and app folders dark in its light scheme; the light stylesheet deliberately goes further and makes them light too, with dark labels, so the whole desktop follows the scheme (the author's decision, 2026-11-03). That means restyling text GNOME Shell's own theme colours for a dark background, and those selectors are the ones to check whenever GNOME's theme changes."
-  - "The extension adds actors to GNOME's and restyles GNOME's through its stylesheet; it replaces no method of GNOME Shell. Where something appears only for a moment — the monitor groups of a workspace switch — it is found by watching for it being added to Main.uiGroup by its style class, workspace-animation, rather than by patching WorkspaceAnimationController, so a change inside GNOME's animation code cannot leave a patched method calling into nothing."
+  - "The blur is static: what is blurred is a copy of the wallpaper — a Meta.BackgroundActor that GNOME's own BackgroundManager keeps in step with the wallpaper settings — under Shell.BlurEffect in ACTOR mode, the way GNOME's own lock screen blurs its background. That effect renders its actor once and keeps the result until the actor itself changes, so the blur is computed when the wallpaper, a monitor or the scale factor changes and at no other time; drawing a frame only shows a texture already made. Dynamic blur (Shell.BlurMode.BACKGROUND, or the ext-background-effect-v1 protocol Mutter gained in GNOME 51) would instead copy and blur what is on the screen behind the surface at every repaint of it — the panel repaints with every tick of the clock and change of an indicator — and buys nothing here: Mutter keeps windows out from under the top panel, the overview and the workspace gap show the wallpaper anyway, and a full-screen window hides the panel. The protocol is not even reachable: it is for Wayland clients asking about their own windows, and the panel is an actor inside the shell. The one exception is the backdrop of an open app folder (`behaviour#folder-over-blur`): what lies behind the folder is the app grid, not the wallpaper, so it cannot be blurred ahead of time, and without blur the folder did not read as a card of its own — the author chose it after seeing both (2026-11-03). Its cost stays small because it is bounded in time: the effect is on only while the folder's veil is, and even then it renders only when the screen behind or over the folder repaints — during the folder's own animation, or a hover inside it — since GNOME draws no frames while nothing changes."
+  - "Every surface shows the same picture: the panel, the overview and the workspace gap each keep their own copy of a monitor's wallpaper, blurred the same way and placed at the monitor's origin, so where one surface meets another — the panel over the overview — the two pictures line up pixel for pixel and no seam shows. A copy each, rather than one shared, keeps every surface an ordinary child of its own parent, shown and hidden with it; the price is that a new wallpaper or monitor layout is blurred once per surface — twice per monitor and once more for the panel — which happens only at those moments."
+  - "Blur is neutral in colour and light — Shell.BlurEffect's brightness stays at 1 — and everything that makes the picture dark or light is the tint drawn over it, a translucent St.Widget laid over every surface's blur. So a change of colour scheme, accent colour or tint setting only recolours that widget, and never re-blurs anything. The tint is one colour for every surface in each case, panel and overview alike, so they meet with no seam (the author's decision, 2026-11-03, after trying a lighter panel than overview). Its colour is the case's base colour from the stylesheet — near-black, near-white — mixed with GNOME's accent colour by the accent amount, at the case's depth as opacity; amount and depth come from the settings (`behaviour#tint-tunable`), the accent colour from GNOME, read off a hidden widget styled with -st-accent-color, the base colours off a hidden widget styled as a tint, so the stylesheet stays where they are written. The extension sets the result on every tint widget as an inline style, again whenever any of those inputs changes. The default dark depth reproduces what Borshevik's Blur my Shell setup drew (blur at brightness 0.6 under a near-black colour at 0.67, the same picture as a near-black tint at about 0.8 over a blur at full brightness)."
+  - "Light or dark is decided by GNOME's dark style alone, unless the light style is switched off in the extension's preferences (`behaviour#light-optional`) — org.gnome.desktop.interface color-scheme, which Quick Settings' Dark Style toggle and Settings › Appearance set: dark for prefer-dark, light for default and prefer-light (the author's decision, 2026-11-03). GNOME Shell 50 left to itself decides otherwise: its user session mode has the colour scheme prefer-dark, under which the shell is light only for prefer-light, a value neither toggle ever sets — so with dark style off applications are light while the panel, menus, Quick Settings and notifications stay dark. While enabled, the extension sets the session mode's colorScheme to prefer-light, under which the shell is dark only for prefer-dark: GNOME's own light variant then covers the panel, menus and popups by the same rule as the glass. With the light style switched off it sets force-dark instead, under which the shell is dark whatever color-scheme says, prefer-light included. It puts the value back on disable, and sets it again whenever the session mode is updated, since GNOME rebuilds the mode's properties from its table then; after each change it notifies St.Settings' color-scheme, which is what makes GNOME Shell reload its stylesheet. The extension's own rules switch on the same rule: it marks Main.uiGroup with the style class borshevik-glass-light while light, so one stylesheet holds both — its plain rules the dark case, the rules under that class the light one."
+  - "Colours live in the stylesheet, the tint's base colours and the folder veil's included, which the extension reads from a hidden themed widget (`behaviour#folder-over-blur`). GNOME keeps the overview, the dash and app folders dark even in its own light variant, and its panel's text white in the overview; the light rules deliberately go further and make them light too, with dark labels, so the whole desktop follows the setting (the author's decision, 2026-11-03). Those are restyled GNOME selectors, the ones to check whenever GNOME's theme changes."
+  - "The extension adds actors to GNOME's and restyles GNOME's through its stylesheet; it replaces no method of GNOME Shell. Where something appears only for a moment — the monitor groups of a workspace switch — it is found by watching for it being added to Main.uiGroup by its style class, workspace-animation, rather than by patching WorkspaceAnimationController, so a change inside GNOME's animation code cannot leave a patched method calling into nothing. The folder veil is changed the same way: GNOME's AppFolderDialog eases its own background_color to black at 204/255 as it opens (85/255 while an icon is dragged over it, transparent as it closes); the extension watches each dialog as it is added to the overview group and, when that colour is GNOME's black, retargets the running transition to its own colour, or sets its own at once when GNOME set black without animating (as with animations off). The same watch gives each dialog a Shell.BlurEffect in BACKGROUND mode and sets its radius from the veil's alpha at every step, turning it off at no veil, so the blur needs no animation of its own and cannot fall out of step with GNOME's. Blur my Shell instead replaced the dialog's _zoomAndFadeIn and _zoomAndFadeOut with copies of its own, which would carry a copy of GNOME's animation code to keep in step."
   - "Runs in the user session mode only: metadata.json names no other session mode, so GNOME disables the extension while the screen is locked and enables it again on unlock. The lock screen keeps GNOME's own blur (the author's decision, 2026-11-03), and the panel GNOME shows over it is transparent there anyway. Being enabled again at every unlock means the blur is computed again then, once per monitor, which is the one recurring cost the extension has."
 recipes:
   - id: run
@@ -16,6 +17,7 @@ recipes:
     instructions:
       - "Check ~/.local/share/gnome-shell/extensions/borshevik-glass@komorebinator. If it is missing, create it as a symlink to this repository's borshevik-glass@komorebinator/ directory. If it is a real directory, or a symlink pointing anywhere else, stop and ask — it is an installation someone made on purpose."
       - "While Borshevik still ships Blur my Shell, disable it for the author's user with `gnome-extensions disable blur-my-shell@aunetx` and say so: the two must not run together (see the project's guideline on replacing it). Re-enabling it is the author's to ask for."
+      - "Compile its GSettings schema in place with `glib-compile-schemas borshevik-glass@komorebinator/schemas`; the output is ignored by git, and the image compiles its own at build time."
       - "Check `gnome-extensions info borshevik-glass@komorebinator` and enable it with `gnome-extensions enable` if it is not enabled. A running shell only knows the extensions it found at login, so on a machine that has never had this one both report that it does not exist; then append its uuid to org.gnome.shell `enabled-extensions` with gsettings instead, which the next session reads."
       - "GNOME Shell on Wayland cannot reload an extension or restart in place: ask the author to log out and back in. Never do it for them — it ends every program in the session, this one included."
       - "Once they are back, look for errors the extension threw since login in `journalctl -b /usr/bin/gnome-shell`, and report them before the author starts looking."
@@ -50,13 +52,21 @@ behaviour:
         given: the overview open
         when: something is typed into the search entry
         then: the entry and the results section are translucent over the blurred wallpaper and their text reads clearly
-  - id: folder-without-second-blur
-    description: "An open app folder is a translucent panel of the scheme's tint over the overview, opaque enough that the icons of the grid behind it do not compete with the folder's own, but the grid is not blurred under it: blurring what is behind an open dialog is dynamic blur, paid for at every frame for as long as the folder is open, which the extension never does (see the guideline on static blur). Blur my Shell blurred it; the author chose to give that up for the cost (2026-11-03)."
+  - id: folder-over-blur
+    description: "An open app folder is a card over the overview, read as a card of its own because what is behind it is blurred and veiled: GNOME's black veil at 80 % over the whole overview, which the author found too dark (2026-11-03), is replaced by a lighter veil of the scheme's colour — darker in the dark case than in the light one — with the overview blurred under it. Blur and veil arrive and leave together: the blur's radius follows the veil GNOME animates, from nothing as the folder opens to full, and back as it closes, and is lighter in proportion while an icon is dragged over the folder, where GNOME lightens its veil. The card itself is the scheme's colour, dense in the dark case, glassier in the light one, where the blur behind keeps the grid from competing with the folder's own icons. This is the one blur the extension computes while the desktop is in use (see the guideline on static blur); Blur my Shell did the same, darkening it at brightness 0.6."
     scenarios:
       - id: folder-open
-        given: the app grid with a folder
+        given: dark style off, the app grid with a folder
         when: the folder is opened
-        then: it opens on a translucent tinted background through which the grid behind is dimly seen, unblurred, and its name entry matches it
+        then: it opens as a light glassy card, and behind it the overview is blurred and only lightly veiled instead of GNOME's near-black
+      - id: folder-dark-veil
+        given: dark style on, the app grid with a folder
+        when: the folder is opened
+        then: the overview behind it is blurred and veiled darker than in the light case, still far from GNOME's 80 % black
+      - id: folder-closed
+        given: a folder open
+        when: it is closed
+        then: the blur behind it is gone with the veil, and nothing is blurred while no folder is open
   - id: panel-and-overview-meet
     description: "The panel keeps its frosted look in the overview. GNOME makes the panel transparent there, and the overview's own picture behind it is the same blur of the same wallpaper under the same tint, so the panel reads as part of the overview with no seam, and opening or closing the overview shows no flash or jump in the strip the panel covers."
     scenarios:
@@ -65,12 +75,20 @@ behaviour:
         when: the overview is opened and closed again
         then: the strip under the panel looks the same throughout, with no seam between the panel and the overview and no flash while they animate
   - id: follows-colour-scheme
-    description: "Every surface follows GNOME's colour scheme, as Settings › Appearance and Quick Settings' dark style toggle set it: in the dark scheme a dark tint with light text, in the light scheme a light tint with dark text — the panel as GNOME's light panel already does, and the overview, dash, search and folders too, which GNOME leaves dark (see the guideline on stylesheets). A change of scheme takes effect at once, in the running session, and computes no blur."
+    description: "Every surface follows GNOME's dark style, as Quick Settings' Dark Style toggle and Settings › Appearance set it: with dark style on, a dark tint with light text; with it off, a light tint with dark text — the panel, its buttons and icons included, and the overview, dash, search and folders too, which GNOME leaves dark — and GNOME's own menus, Quick Settings, calendar and notifications go light with them (see the guideline on light or dark). A change takes effect at once, in the running session, and computes no blur."
     scenarios:
       - id: switch-to-light
-        given: the dark scheme, the overview open on the app grid
-        when: the scheme is switched to light in Quick Settings
-        then: the panel, the app grid background, the dash and the search entry turn light with dark labels at once, the wallpaper still blurred behind them, with no relogin
+        given: dark style on, the overview open on the app grid
+        when: dark style is switched off in Quick Settings
+        then: the panel with its text and icons, the app grid background, the dash and the search entry turn light with dark labels at once, the wallpaper still blurred behind them, with no relogin
+      - id: menus-light
+        given: dark style off
+        when: Quick Settings is opened
+        then: it is GNOME's light Quick Settings, as GNOME draws it for prefer-light
+      - id: prefer-light
+        given: dark style on
+        when: color-scheme is set to prefer-light, which only gsettings sets
+        then: everything is light, as with dark style off
       - id: switch-to-dark
         given: the light scheme
         when: the scheme is switched to dark
@@ -87,25 +105,47 @@ behaviour:
         when: a second monitor is connected
         then: the overview on the new monitor shows its wallpaper blurred
   - id: costs-nothing-at-rest
-    description: "While the desktop is in use nothing is blurred: moving and resizing windows, the clock ticking, indicators changing, opening and closing the overview, sliding between workspaces and opening folders all only show pictures already blurred. A session with the extension uses no more GPU time frame to frame than one without it, apart from drawing a few textures."
+    description: "While the desktop is in use nothing is blurred: moving and resizing windows, the clock ticking, indicators changing, opening and closing the overview and sliding between workspaces all only show pictures already blurred. An open folder is the exception, and only while it is open (`behaviour#folder-over-blur`). A session with the extension uses no more GPU time frame to frame than one without it, apart from drawing a few textures."
     scenarios:
       - id: clock-tick
         given: the desktop, the extension enabled and settled
         when: a few minutes pass, the clock in the panel changing, with the extension enabled and then with it disabled
         then: gnome-shell's CPU time over the same span is the same either way, within noise — had the panel been blurred at its repaints, every tick of the clock would show
   - id: rest-left-to-gnome
-    description: "Everything else stays as GNOME draws it: popup menus, Quick Settings, the calendar, notifications, OSDs, dialogs, the window switcher, the screenshot UI, the lock screen and the login screen, and application windows. Blur my Shell had been set up to leave them alone too, the lock screen and screenshot UI aside, which the author chose to give back to GNOME (2026-11-03)."
+    description: "Everything else stays as GNOME draws it in the variant the dark style picks: popup menus, Quick Settings, the calendar, notifications, OSDs, dialogs, the window switcher, the screenshot UI, the lock screen and the login screen, and application windows. The extension gives them no glass and restyles none of them; it only picks which of GNOME's two variants they are drawn in (see the guideline on light or dark). Blur my Shell had been set up to leave them alone too, the lock screen and screenshot UI aside, which the author chose to give back to GNOME (2026-11-03)."
     scenarios:
       - id: menus-untouched
-        given: the extension enabled
+        given: the extension enabled, dark style on
         when: Quick Settings and the calendar are opened
         then: they look exactly as without the extension
       - id: lock-screen-is-gnome
         given: the extension enabled
         when: the screen is locked
         then: the lock screen shows GNOME's own blurred wallpaper, and after unlocking the panel and the overview are frosted again
+  - id: light-optional
+    description: "The light style can be switched off in the extension's preferences — on by default. Off, everything stays dark whatever GNOME's dark style is: the glass with its dark tint and light text, and GNOME's own panel, menus, Quick Settings and notifications, even for prefer-light, which would otherwise make GNOME light by itself. For whoever wants applications light and the shell dark, as GNOME 50 has it by default. The switch takes effect at once, in the running session."
+    scenarios:
+      - id: off-stays-dark
+        given: dark style off, the light style switched on
+        when: the light style is switched off in the preferences
+        then: the panel, the overview and Quick Settings turn dark at once, as with dark style on
+      - id: off-even-for-prefer-light
+        given: the light style switched off
+        when: color-scheme is set to prefer-light
+        then: everything stays dark, GNOME's menus included
+  - id: tint-tunable
+    description: "The tint can be tuned in the extension's preferences, to find on a real screen what looks best (the author's request, 2026-11-03): whether GNOME's accent colour is mixed into it, and by how much, from 5 to 30 %; and how deep the dark and the light tint are, as opacity in per cent. The defaults are what the author settled on before the settings existed — accent on at 10 % (the author's choice after trying 15, 2026-11-03), dark depth 80, light depth 45. A change shows at once, on every surface, without re-blurring; so does a change of GNOME's accent colour."
+    scenarios:
+      - id: accent-off
+        given: the accent tint on
+        when: it is switched off in the preferences
+        then: the glass is the plain base colour of its case at once, with no hue of the accent
+      - id: depth-changed
+        given: dark style on
+        when: the dark depth is set to 50 in the preferences
+        then: the glass at once lets the blurred wallpaper through as a tint of 50 % opacity would
   - id: disable-restores
-    description: "Disabling the extension gives GNOME's look back entirely and at once: every actor it added is destroyed, its stylesheets unload with it, and no surface is left transparent over nothing."
+    description: "Disabling the extension gives GNOME's look back entirely and at once: every actor it added is destroyed, its stylesheet unloads with it, the session mode's colour scheme is GNOME's own again, a folder veil it changed goes back to GNOME's the next time a folder opens, and no surface is left transparent over nothing."
     scenarios:
       - id: disable
         given: the extension enabled, the overview closed
@@ -115,13 +155,27 @@ components:
   - id: stylesheets
     type: "@ConfigFile"
     format: CSS (GNOME Shell St theming)
-    src:
-      - borshevik-glass@komorebinator/stylesheet-dark.css
-      - borshevik-glass@komorebinator/stylesheet-light.css
-      - borshevik-glass@komorebinator/common.css
-    description: "The tint of each scheme and the restyling of GNOME's own overview, dash, search, folder and panel selectors, as the guideline on stylesheets describes; common.css holds what both schemes share and is imported by both. The light tint is a starting point to be tuned with the author on a real screen."
+    src: borshevik-glass@komorebinator/stylesheet.css
+    description: "The tint's base colour of both cases, the folder veil's, and the restyling of GNOME's own panel, overview, dash, search and folder selectors: plain rules for what both share and for the dark case, rules under .borshevik-glass-light for the light one (see the guideline on light or dark). The tint's depth and accent are not here but in the settings (see the guideline on blur and tint)."
   - id: metadata
     type: "@ConfigFile"
     format: JSON
     src: borshevik-glass@komorebinator/metadata.json
-    description: "Extension manifest: GNOME Shell 50, the version Borshevik ships, no session modes beyond the user's, and no preferences."
+    description: "Extension manifest: GNOME Shell 50, the version Borshevik ships, no session modes beyond the user's, the settings schema and the gettext domain the preferences use."
+  - id: settings
+    type: "@ConfigFile"
+    format: GSettings schema (XML)
+    src: borshevik-glass@komorebinator/schemas/org.gnome.shell.extensions.borshevik-glass.gschema.xml
+    description: "The extension's settings: light-style (`behaviour#light-optional`), on by default; and the tint's — accent-tint and accent-amount, dark-depth and light-depth (`behaviour#tint-tunable`). The extension follows their changes in the running session."
+  - id: preferences
+    type: "@View"
+    src: borshevik-glass@komorebinator/prefs.js
+    description: "The preferences window GNOME's Extensions app opens: one page — Light style, a switch with a line under it saying what switching it off does; then the tint group: Accent tint, a switch, Accent amount, a slider from 5 to 30 % shown only while the accent tint is on, and Dark depth and Light depth, sliders of the tint's opacity in per cent. Each is bound to its setting, so a move shows on the screen at once."
+  - id: translations
+    type: "@ConfigFile"
+    format: gettext (.pot template, .po per-locale, compiled .mo)
+    src:
+      - po/borshevik-glass@komorebinator.pot
+      - po/ru.po
+      - borshevik-glass@komorebinator/locale/ru/LC_MESSAGES/borshevik-glass@komorebinator.mo
+    description: "The preferences' strings in Russian, Borshevik's other language. The extension draws no text of its own in the shell, so only the preferences are translated."

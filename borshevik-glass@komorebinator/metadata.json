@@ -1,0 +1,10 @@
+{
+  "uuid": "borshevik-glass@komorebinator",
+  "name": "Borshevik Glass",
+  "description": "Shows the wallpaper, blurred once and tinted for GNOME's colour scheme, behind the top panel, the overview, the dash, app folders and the gap between workspaces.",
+  "shell-version": ["50"],
+  "url": "https://github.com/komorebinator/borshevik-glass",
+  "settings-schema": "org.gnome.shell.extensions.borshevik-glass",
+  "gettext-domain": "borshevik-glass@komorebinator",
+  "version": 1
+}

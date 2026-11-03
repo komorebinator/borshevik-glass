@@ -1,0 +1,362 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+
+/* One stylesheet for both cases. Plain rules hold what both share and the dark
+   case; the rules under .borshevik-glass-light, which the extension puts on
+   Main.uiGroup while GNOME's dark style is off, hold the light one. GNOME
+   Shell's own stylesheet-dark/-light mechanism is not used: it follows the
+   shell's variant, which is dark unless color-scheme is prefer-light. */
+
+/* ---- Both cases: the surfaces that show the glass give up GNOME's solid
+   colour, and what sits on the glass gives up its backdrop. ---- */
+
+#panel,
+#panel:overview {
+  background-color: transparent;
+}
+
+.workspace-animation {
+  background-color: transparent !important;
+}
+
+/* Icons and results sit straight on the glass, with no square backdrop
+   until hovered or focused; the dash keeps none even then, its icons
+   highlighting on their own. */
+.overview-tile,
+.grid-search-result,
+.list-search-result,
+.search-provider-icon,
+#dash .overview-tile,
+#dash .grid-search-result,
+#dash .dash-item-container .overview-tile .overview-icon,
+#dash .dash-item-container .show-apps .overview-icon,
+#dash .dash-item-container .grid-search-result .overview-icon {
+  background-color: transparent !important;
+}
+
+.search-entry,
+.app-folder-dialog .folder-name-container .folder-name-entry {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.app-folder-dialog {
+  box-shadow: none;
+}
+
+/* ---- Dark ---- */
+
+/* The tint's base colour in the dark case. The extension reads it, mixes in
+   GNOME's accent colour and sets the depth from the settings, so only the
+   colour counts here. */
+.borshevik-glass-tint {
+  background-color: rgb(0, 3, 4);
+}
+
+/* GNOME's accent colour, read by the extension for the tint. */
+.borshevik-glass-accent {
+  background-color: -st-accent-color;
+}
+
+/* Surfaces on the glass: translucent instead of GNOME's opaque grey. */
+#dash .dash-background,
+.search-entry,
+.search-section-content,
+.workspace-thumbnails .workspace-thumbnail,
+.overview-tile.app-folder,
+.page-navigation-arrow,
+.app-folder-dialog .page-navigation-arrow,
+.app-folder-dialog .icon-button,
+.app-folder-dialog .folder-name-container .folder-name-entry {
+  background-color: rgba(100, 100, 100, 0.35) !important;
+}
+
+.overview-tile:hover,
+.overview-tile:focus,
+.overview-tile:selected,
+.overview-tile:highlighted,
+.grid-search-result:hover,
+.grid-search-result:focus,
+.grid-search-result:selected,
+.grid-search-result:highlighted,
+.list-search-result:hover,
+.list-search-result:focus,
+.list-search-result:selected,
+.list-search-result:highlighted,
+.search-provider-icon:hover,
+.search-provider-icon:focus,
+.overview-tile.app-folder:hover,
+.overview-tile.app-folder:focus,
+.page-navigation-arrow:hover,
+.page-navigation-arrow:focus,
+.app-folder-dialog .icon-button:hover,
+.app-folder-dialog .icon-button:focus,
+#dash .overview-tile:hover .overview-icon,
+#dash .overview-tile:focus .overview-icon,
+#dash .show-apps:hover .overview-icon,
+#dash .show-apps:focus .overview-icon {
+  background-color: rgba(120, 120, 120, 0.35) !important;
+}
+
+.overview-tile:active,
+.overview-tile:drop,
+.overview-tile:focus:hover,
+.overview-tile:selected:hover,
+.overview-tile:highlighted:hover,
+.grid-search-result:active,
+.grid-search-result:focus:hover,
+.list-search-result:active,
+.list-search-result:focus:hover,
+.search-provider-icon:active,
+.search-provider-icon:focus:hover,
+.page-navigation-arrow:active,
+.page-navigation-arrow:focus:hover,
+.app-folder-dialog .icon-button:active,
+.app-folder-dialog .icon-button:focus:hover,
+#dash .overview-tile:active .overview-icon,
+#dash .overview-tile:focus:hover .overview-icon,
+#dash .overview-tile:drop .overview-icon,
+#dash .show-apps:checked .overview-icon {
+  background-color: rgba(120, 120, 120, 0.4) !important;
+}
+
+.overview-tile:focus:active,
+.grid-search-result:focus:active,
+.list-search-result:focus:active,
+.search-provider-icon:focus:active,
+.page-navigation-arrow:focus:active,
+.app-folder-dialog .icon-button:focus:active,
+#dash .show-apps:checked .overview-icon:hover {
+  background-color: rgba(120, 120, 120, 0.45) !important;
+}
+
+.search-entry,
+.app-folder-dialog .folder-name-container .folder-name-entry {
+  color: #ffffff;
+}
+
+.search-entry .search-entry-icon {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+/* An open folder over the blurred overview: a darker, denser tint than the
+   glass, so it reads as a card of its own. */
+.app-folder-dialog {
+  background-color: rgba(20, 22, 26, 0.85);
+}
+
+/* The veil over the overview behind an open folder, in place of GNOME's black
+   at 80 %; read by the extension from a hidden widget, since GNOME animates it
+   as a colour of the dialog, not through its style. Kept off pure black, which
+   is how the extension tells GNOME's veil from its own. */
+.borshevik-glass-folder-veil {
+  background-color: rgba(0, 3, 4, 0.3);
+}
+
+/* ---- Light ---- */
+
+/* The tint's base colour in the light case, GNOME's light panel colour. */
+.borshevik-glass-light .borshevik-glass-tint {
+  background-color: rgb(250, 250, 251);
+}
+
+
+.borshevik-glass-light .borshevik-glass-folder-veil {
+  background-color: rgba(0, 3, 4, 0.1);
+}
+
+/* Surfaces on the glass: translucent white instead of GNOME's opaque grey. */
+.borshevik-glass-light #dash .dash-background,
+.borshevik-glass-light .search-entry,
+.borshevik-glass-light .search-section-content,
+.borshevik-glass-light .workspace-thumbnails .workspace-thumbnail,
+.borshevik-glass-light .overview-tile.app-folder,
+.borshevik-glass-light .page-navigation-arrow,
+.borshevik-glass-light .app-folder-dialog .page-navigation-arrow,
+.borshevik-glass-light .app-folder-dialog .icon-button,
+.borshevik-glass-light .app-folder-dialog .folder-name-container .folder-name-entry {
+  background-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.borshevik-glass-light .overview-tile:hover,
+.borshevik-glass-light .overview-tile:focus,
+.borshevik-glass-light .overview-tile:selected,
+.borshevik-glass-light .overview-tile:highlighted,
+.borshevik-glass-light .grid-search-result:hover,
+.borshevik-glass-light .grid-search-result:focus,
+.borshevik-glass-light .grid-search-result:selected,
+.borshevik-glass-light .grid-search-result:highlighted,
+.borshevik-glass-light .list-search-result:hover,
+.borshevik-glass-light .list-search-result:focus,
+.borshevik-glass-light .list-search-result:selected,
+.borshevik-glass-light .list-search-result:highlighted,
+.borshevik-glass-light .search-provider-icon:hover,
+.borshevik-glass-light .search-provider-icon:focus,
+.borshevik-glass-light .overview-tile.app-folder:hover,
+.borshevik-glass-light .overview-tile.app-folder:focus,
+.borshevik-glass-light .page-navigation-arrow:hover,
+.borshevik-glass-light .page-navigation-arrow:focus,
+.borshevik-glass-light .app-folder-dialog .icon-button:hover,
+.borshevik-glass-light .app-folder-dialog .icon-button:focus,
+.borshevik-glass-light #dash .overview-tile:hover .overview-icon,
+.borshevik-glass-light #dash .overview-tile:focus .overview-icon,
+.borshevik-glass-light #dash .show-apps:hover .overview-icon,
+.borshevik-glass-light #dash .show-apps:focus .overview-icon {
+  background-color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.borshevik-glass-light .overview-tile:active,
+.borshevik-glass-light .overview-tile:drop,
+.borshevik-glass-light .overview-tile:focus:hover,
+.borshevik-glass-light .overview-tile:selected:hover,
+.borshevik-glass-light .overview-tile:highlighted:hover,
+.borshevik-glass-light .grid-search-result:active,
+.borshevik-glass-light .grid-search-result:focus:hover,
+.borshevik-glass-light .list-search-result:active,
+.borshevik-glass-light .list-search-result:focus:hover,
+.borshevik-glass-light .search-provider-icon:active,
+.borshevik-glass-light .search-provider-icon:focus:hover,
+.borshevik-glass-light .page-navigation-arrow:active,
+.borshevik-glass-light .page-navigation-arrow:focus:hover,
+.borshevik-glass-light .app-folder-dialog .icon-button:active,
+.borshevik-glass-light .app-folder-dialog .icon-button:focus:hover,
+.borshevik-glass-light #dash .overview-tile:active .overview-icon,
+.borshevik-glass-light #dash .overview-tile:focus:hover .overview-icon,
+.borshevik-glass-light #dash .overview-tile:drop .overview-icon,
+.borshevik-glass-light #dash .show-apps:checked .overview-icon {
+  background-color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.borshevik-glass-light .overview-tile:focus:active,
+.borshevik-glass-light .grid-search-result:focus:active,
+.borshevik-glass-light .list-search-result:focus:active,
+.borshevik-glass-light .search-provider-icon:focus:active,
+.borshevik-glass-light .page-navigation-arrow:focus:active,
+.borshevik-glass-light .app-folder-dialog .icon-button:focus:active,
+.borshevik-glass-light #dash .show-apps:checked .overview-icon:hover {
+  background-color: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* GNOME keeps the overview dark in its light scheme and colours its text for
+   that; on light glass the text goes dark. These are the selectors to check
+   whenever GNOME's theme changes. */
+.borshevik-glass-light .overview-tile,
+.borshevik-glass-light .grid-search-result,
+.borshevik-glass-light .list-search-result,
+.borshevik-glass-light .search-provider-icon,
+.borshevik-glass-light .search-provider-icon .list-search-provider-content .list-search-provider-details,
+.borshevik-glass-light .search-section-content,
+.borshevik-glass-light .app-folder,
+.borshevik-glass-light .app-folder-dialog,
+.borshevik-glass-light .app-folder-dialog .icon-button,
+.borshevik-glass-light .app-folder-dialog .page-navigation-arrow,
+.borshevik-glass-light .page-navigation-arrow,
+.borshevik-glass-light .page-navigation-arrow > StIcon,
+.borshevik-glass-light .workspace-thumbnails .workspace-thumbnail,
+.borshevik-glass-light #dash .dash-item-container .overview-tile .overview-icon,
+.borshevik-glass-light #dash .dash-item-container .show-apps .overview-icon,
+.borshevik-glass-light .system-action-icon {
+  color: #222226 !important;
+}
+
+.borshevik-glass-light .list-search-result .list-search-result-description {
+  color: rgba(34, 34, 38, 0.65);
+}
+
+.borshevik-glass-light .search-statustext {
+  color: rgba(34, 34, 38, 0.8);
+}
+
+.borshevik-glass-light .app-grid-running-dot,
+.borshevik-glass-light .page-indicator .page-indicator-icon {
+  background-color: #222226;
+}
+
+.borshevik-glass-light #dash .dash-separator {
+  background-color: rgba(34, 34, 38, 0.15);
+}
+
+.borshevik-glass-light .system-action-icon {
+  background-color: rgba(34, 34, 38, 0.1);
+}
+
+.borshevik-glass-light .search-entry,
+.borshevik-glass-light .app-folder-dialog .folder-name-container .folder-name-entry,
+.borshevik-glass-light .search-entry StLabel.hint-text,
+.borshevik-glass-light .app-folder-dialog .folder-name-container .folder-name-entry StLabel.hint-text {
+  color: rgba(34, 34, 38, 0.7);
+}
+
+.borshevik-glass-light .search-entry:focus,
+.borshevik-glass-light .search-entry:hover,
+.borshevik-glass-light .app-folder-dialog .folder-name-container .folder-name-entry:focus,
+.borshevik-glass-light .app-folder-dialog .folder-name-container .folder-name-entry:hover {
+  color: #222226;
+}
+
+.borshevik-glass-light .search-entry .search-entry-icon {
+  color: rgba(34, 34, 38, 0.6);
+}
+
+/* The panel, in and out of the overview. With dark style off GNOME Shell 50
+   still uses its dark variant, white text and icons on its black panel, and
+   in the overview even its light variant does; on light glass they are dark,
+   as GNOME's own light panel draws them. Symbolic icons take the button's
+   colour, so this darkens them too; icons drawn in a colour of their own do
+   not change. The panel itself sets the colour too, for what other
+   extensions put on it without a colour of its own: GNOME sets none there,
+   so it would inherit white. */
+.borshevik-glass-light #panel {
+  color: #222226;
+  box-shadow: inset 0 -0.5px 0 0 rgba(34, 34, 38, 0.1);
+}
+
+.borshevik-glass-light #panel .panel-button,
+.borshevik-glass-light #panel .panel-button.clock-display,
+.borshevik-glass-light #panel:overview .panel-button,
+.borshevik-glass-light #panel:overview .panel-button.clock-display {
+  color: #222226;
+}
+
+.borshevik-glass-light #panel .panel-button#panelActivities .workspace-dot,
+.borshevik-glass-light #panel:overview .panel-button#panelActivities .workspace-dot {
+  background-color: #222226;
+}
+
+.borshevik-glass-light #panel .panel-button:focus,
+.borshevik-glass-light #panel .panel-button:hover,
+.borshevik-glass-light #panel .panel-button.clock-display:focus .clock,
+.borshevik-glass-light #panel .panel-button.clock-display:hover .clock,
+.borshevik-glass-light #panel:overview .panel-button:focus,
+.borshevik-glass-light #panel:overview .panel-button:hover,
+.borshevik-glass-light #panel:overview .panel-button.clock-display:focus .clock,
+.borshevik-glass-light #panel:overview .panel-button.clock-display:hover .clock {
+  box-shadow: inset 0 0 0 100px rgba(34, 34, 38, 0.17);
+}
+
+.borshevik-glass-light #panel .panel-button:active,
+.borshevik-glass-light #panel .panel-button:checked,
+.borshevik-glass-light #panel .panel-button.clock-display:active .clock,
+.borshevik-glass-light #panel .panel-button.clock-display:checked .clock,
+.borshevik-glass-light #panel:overview .panel-button:active,
+.borshevik-glass-light #panel:overview .panel-button:checked,
+.borshevik-glass-light #panel:overview .panel-button.clock-display:active .clock,
+.borshevik-glass-light #panel:overview .panel-button.clock-display:checked .clock {
+  box-shadow: inset 0 0 0 100px rgba(34, 34, 38, 0.28);
+}
+
+.borshevik-glass-light #panel .panel-button:active:hover,
+.borshevik-glass-light #panel .panel-button:checked:hover,
+.borshevik-glass-light #panel .panel-button.clock-display:active:hover .clock,
+.borshevik-glass-light #panel .panel-button.clock-display:checked:hover .clock,
+.borshevik-glass-light #panel:overview .panel-button:active:hover,
+.borshevik-glass-light #panel:overview .panel-button:checked:hover,
+.borshevik-glass-light #panel:overview .panel-button.clock-display:active:hover .clock,
+.borshevik-glass-light #panel:overview .panel-button.clock-display:checked:hover .clock {
+  box-shadow: inset 0 0 0 100px rgba(34, 34, 38, 0.32);
+}
+
+/* An open folder over the blurred overview: glassy, the blur behind keeping
+   the grid from competing with the folder's own icons. */
+.borshevik-glass-light .app-folder-dialog {
+  background-color: rgba(250, 250, 251, 0.6);
+}
