@@ -134,7 +134,7 @@ behaviour:
         when: color-scheme is set to prefer-light
         then: everything stays dark, GNOME's menus included
   - id: tint-tunable
-    description: "The tint can be tuned in the extension's preferences, to find on a real screen what looks best (the author's request, 2026-11-03): whether GNOME's accent colour is mixed into it, and by how much, from 5 to 30 %; and how deep the dark and the light tint are, as opacity in per cent. The defaults are what the author settled on before the settings existed — accent on at 15 %, dark depth 80, light depth 45. A change shows at once, on every surface, without re-blurring; so does a change of GNOME's accent colour."
+    description: "The tint can be tuned in the extension's preferences, to find on a real screen what looks best (the author's request, 2026-11-03): whether GNOME's accent colour is mixed into it, and by how much, from 5 to 30 %; and how deep the dark and the light tint are, as opacity in per cent. The defaults are what the author settled on before the settings existed — accent on at 10 % (the author's choice after trying 15, 2026-11-03), dark depth 80, light depth 45. A change shows at once, on every surface, without re-blurring; so does a change of GNOME's accent colour."
     scenarios:
       - id: accent-off
         given: the accent tint on

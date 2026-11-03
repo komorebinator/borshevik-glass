@@ -13,7 +13,7 @@
     </key>
     <key name="accent-amount" type="i">
       <range min="5" max="30"/>
-      <default>15</default>
+      <default>10</default>
       <summary>Accent amount</summary>
       <description>How much of the accent colour is mixed into the tint, in per cent.</description>
     </key>
