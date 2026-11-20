@@ -6,18 +6,17 @@
 // arithmetic, with no GNOME import, so the test machine's scenarios run the
 // same rules the extension does. See the guideline on the glass's colour.
 
-// How much of the wallpaper's light and dark the glass keeps around its
-// target lightness: L* = target + LIFT_GAIN × (L* − 50).
-export const LIFT_GAIN = 0.3;
-
-// Per case: the target lightness from the lightness under the panel, the most
-// of the wallpaper's chroma the glass may keep, and how much colour it may
-// leave in the glass by the wallpaper's mean hue — more for purple and
-// magenta, less for blue in the dark case; how far a unit of depth moves the
-// target; and the band under the panel, mixed into the glass's top.
+// Per case: the target lightness from the lightness under the panel; how much
+// of the wallpaper's light and dark the glass keeps around it, its gain —
+// L* = target + gain × (L* − 50); the most of the wallpaper's chroma the glass
+// may keep, and how much colour it may leave in the glass by the wallpaper's
+// mean hue — more for purple and magenta, less for blue in the dark case; how
+// far a unit of depth moves the target; and the band under the panel, mixed
+// into the glass's top, full over the panel and fading out below it.
 export const CASES = {
     dark: {
         target: panelL => 12 - 0.2 * panelL,
+        gain: 0.3,
         maxChroma: 0.5,
         colour: hue => 0.8 * (2.7 + 2.0 * bump(hue, 305, 45) - 1.2 * bump(hue, 250, 35)),
         perDepth: -24,
@@ -25,6 +24,7 @@ export const CASES = {
     },
     light: {
         target: () => 80,
+        gain: 0.6,
         maxChroma: 1,
         colour: hue => 28 + 20 * bump(hue, 305, 45),
         perDepth: 10,
@@ -36,8 +36,9 @@ export const CASES = {
 // screen, which the glass's blur leaves little more detail than.
 export const SAMPLE_WIDTH = 144;
 
-// How far below the panel the band fades out, in logical pixels.
-export const BAND_FADE = 60;
+// How far below the panel the band fades out, as a share of the monitor's
+// height: 200 logical px on a screen 1080 high.
+export const BAND_FADE = 0.185;
 
 // The accent's share over the dark glass at strength 100 %, in per cent:
 // purple's, scaled by purple's luminance over the accent's, so a light accent
@@ -56,7 +57,7 @@ const finv = t => t ** 3 > 216 / 24389 ? t ** 3 : (116 * t - 16) / (24389 / 27);
 
 const luminance = ([r, g, b]) => 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
 
-// sRGB 0..255 to CIELAB, as the lift shader and the lab's glass.py do.
+// sRGB 0..255 to CIELAB, as the lift shader does.
 export function lab(r, g, b) {
     const R = lin(r), G = lin(g), B = lin(b);
     const fx = f((R * 0.4124 + G * 0.3576 + B * 0.1805) / 0.95047);
@@ -68,8 +69,8 @@ export function lab(r, g, b) {
 // The chroma of one pixel of the glass after the lift: lightness set, chroma
 // scaled, back to sRGB with each linear channel clamped — as the shader does,
 // which is what lights up dark saturated colours — and into CIELAB again.
-function liftedChroma(L, A, B, target, chroma) {
-    const l = Math.min(100, Math.max(0, target + LIFT_GAIN * (L - 50)));
+function liftedChroma(L, A, B, target, gain, chroma) {
+    const l = Math.min(100, Math.max(0, target + gain * (L - 50)));
     const fy = (l + 16) / 116;
     const x = finv(fy + A * chroma / 500) * 0.95047;
     const y = finv(fy);
@@ -123,9 +124,9 @@ export function analyseColour(rgb) {
 }
 
 // The lift of a case on a wallpaper at a depth (1 = as designed): the target
-// from the strip under the panel, moved by the depth, and the share of the
-// wallpaper's chroma that leaves the case's colour in the glass, found by
-// halving.
+// from the strip under the panel, moved by the depth, the case's gain, and
+// the share of the wallpaper's chroma that leaves the case's colour in the
+// glass, found by halving.
 export function liftFor(dark, stats, depth = 1) {
     const rule = CASES[dark ? 'dark' : 'light'];
     const target = Math.min(100, Math.max(-60, rule.target(stats.panelL) + rule.perDepth * (depth - 1)));
@@ -135,11 +136,12 @@ export function liftFor(dark, stats, depth = 1) {
     const left = chroma => {
         let sum = 0, count = 0;
         for (let i = 0; i < n; i += step, count++)
-            sum += liftedChroma(stats.L[i], stats.A[i], stats.B[i], target, chroma);
+            sum += liftedChroma(stats.L[i], stats.A[i], stats.B[i], target, rule.gain, chroma);
         return sum / count;
     };
+    const {gain} = rule;
     if (left(rule.maxChroma) <= wanted)
-        return {target, chroma: rule.maxChroma};
+        return {target, gain, chroma: rule.maxChroma};
     let lo = 0, hi = rule.maxChroma;
     for (let i = 0; i < 14; i++) {
         const mid = (lo + hi) / 2;
@@ -148,7 +150,7 @@ export function liftFor(dark, stats, depth = 1) {
         else
             hi = mid;
     }
-    return {target, chroma: (lo + hi) / 2};
+    return {target, gain, chroma: (lo + hi) / 2};
 }
 
 // The accent's share over the glass at strength 100 %, in per cent: the light

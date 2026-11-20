@@ -4,10 +4,10 @@
    fills in the shares and loads the result after stylesheet.css, again
    whenever an accent setting changes. Each case has its own: {{dark-glass}} and
    {{light-glass}} are what is left clear of the accent widget over the glass
-   (1 − its share), {{…-surface}} and {{…-card}} the per cent of the accent in
-   the surfaces and in an open folder's card — 8, 25 and 6 % in the light case,
-   4, 12.5 and 9 % in the dark one, times the accent strength, or none with the
-   accent switched off.
+   (1 − its share), {{…-surface}} the per cent of the accent in the surfaces —
+   8 and 25 % in the light case; in the dark one the glass's by the accent's
+   lightness, 3.2 % for purple, and 12.5 % — times the accent strength, or none
+   with the accent switched off.
    st-mix(a, b, N%) is N % of a; st-transparentize(c, x) takes x off c's alpha.
    A rule here that must win over one of stylesheet.css is made more specific
    than it: of two equally specific rules St applied stylesheet.css's, so the
@@ -21,7 +21,9 @@
   background-color: st-transparentize(-st-accent-color, {{dark-glass}});
 }
 
-/* Surfaces on the glass: translucent instead of GNOME's opaque grey. */
+/* Surfaces on the glass: translucent instead of GNOME's opaque grey. The
+   dock, folder tiles and an open folder's card are one pane of glass, each
+   outlined (stylesheet.css). */
 #dash .dash-background,
 .search-entry,
 .search-section-content,
@@ -30,8 +32,9 @@
 .page-navigation-arrow,
 .app-folder-dialog .page-navigation-arrow,
 .app-folder-dialog .icon-button,
-.app-folder-dialog .folder-name-container .folder-name-entry {
-  background-color: st-transparentize(st-mix(-st-accent-color, rgb(100, 100, 100), {{dark-surface}}%), 0.65) !important;
+.app-folder-dialog .folder-name-container .folder-name-entry,
+.app-folder-dialog-container .app-folder-dialog {
+  background-color: st-transparentize(st-mix(-st-accent-color, rgb(50, 50, 50), {{dark-surface}}%), 0.65) !important;
 }
 
 .overview-tile:hover,
@@ -93,11 +96,6 @@
   background-color: st-transparentize(st-mix(-st-accent-color, rgb(120, 120, 120), {{dark-surface}}%), 0.55) !important;
 }
 
-/* An open folder over the blurred overview: darker and denser than the glass,
-   so it reads as a card of its own. */
-.app-folder-dialog {
-  background-color: st-transparentize(st-mix(-st-accent-color, rgb(20, 22, 26), {{dark-card}}%), 0.15);
-}
 
 /* ---- Light ---- */
 
@@ -105,8 +103,8 @@
   background-color: st-transparentize(-st-accent-color, {{light-glass}});
 }
 
-/* Surfaces on the glass: the panel's near-white, translucent, instead of
-   GNOME's opaque grey. */
+/* Surfaces on the glass: a near-white, translucent, instead of GNOME's opaque
+   grey; the dock, folder tiles and an open folder's card, as in the dark case. */
 .borshevik-glass-light #dash .dash-background,
 .borshevik-glass-light .search-entry,
 .borshevik-glass-light .search-section-content,
@@ -115,8 +113,9 @@
 .borshevik-glass-light .page-navigation-arrow,
 .borshevik-glass-light .app-folder-dialog .page-navigation-arrow,
 .borshevik-glass-light .app-folder-dialog .icon-button,
-.borshevik-glass-light .app-folder-dialog .folder-name-container .folder-name-entry {
-  background-color: st-transparentize(st-mix(-st-accent-color, rgb(250, 250, 251), {{light-surface}}%), 0.444) !important;
+.borshevik-glass-light .app-folder-dialog .folder-name-container .folder-name-entry,
+.borshevik-glass-light .app-folder-dialog-container .app-folder-dialog {
+  background-color: st-transparentize(st-mix(-st-accent-color, rgb(235, 235, 236), {{light-surface}}%), 0.444) !important;
 }
 
 .borshevik-glass-light .overview-tile:hover,
@@ -176,10 +175,4 @@
 .borshevik-glass-light .app-folder-dialog .icon-button:focus:active,
 .borshevik-glass-light #dash .dash-item-container .show-apps:checked .overview-icon:hover {
   background-color: st-transparentize(st-mix(-st-accent-color, rgb(250, 250, 251), {{light-surface}}%), 0.15) !important;
-}
-
-/* An open folder over the blurred overview: the dock's near-white, glassy, the
-   blur behind keeping the grid from competing with the folder's own icons. */
-.borshevik-glass-light .app-folder-dialog {
-  background-color: st-transparentize(st-mix(-st-accent-color, rgb(250, 250, 251), {{light-card}}%), 0.444);
 }

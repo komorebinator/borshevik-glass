@@ -18,10 +18,6 @@ import {BAKE_MARGIN, MonitorGlass} from './glass.js';
 // The style class GNOME gives each monitor's group while workspaces slide.
 const WORKSPACE_ANIMATION_STYLE = 'workspace-animation';
 
-// The alpha of GNOME's own folder veil (DIALOG_SHADE_NORMAL); its veil while an
-// icon is dragged over the folder is lighter, and ours is scaled in proportion.
-const GNOME_VEIL_ALPHA = 204;
-
 // On Main.uiGroup while GNOME's dark style is off and the light style on: the
 // stylesheet's light rules.
 const LIGHT_STYLE = 'borshevik-glass-light';
@@ -33,14 +29,13 @@ const DARK_SESSION_SCHEME = 'force-dark';
 const OWN_SESSION_SCHEMES = [LIGHT_SESSION_SCHEME, DARK_SESSION_SCHEME];
 
 // The accent's share, in per cent at an accent strength of 100 %, of the
-// surfaces on the glass and of an open folder's card, per case, and of the
-// light glass: the dark case's surfaces take half of the light one's, at which
-// the author found them right on a real screen, and its card more, which a
-// dark card needs to show the accent at all. The dark glass's share depends on
-// the accent itself (adapt.js).
+// surfaces on the glass — an open folder's card among them — per case, and of
+// the light glass: the dark case's surfaces take half of the light one's, at
+// which the author found them right on a real screen. The dark glass's share
+// depends on the accent itself (adapt.js).
 const ACCENT_SHARES = {
-    light: {glass: 8, surface: 25, card: 6},
-    dark: {surface: 12.5, card: 9},
+    light: {glass: 8, surface: 25},
+    dark: {surface: 12.5},
 };
 
 // The settings the glass is baked with, and those the accent stylesheet is.
@@ -77,7 +72,7 @@ class Glass extends St.Widget {
     }
 });
 
-const isGnomeVeil = c => c?.red === 0 && c.green === 0 && c.blue === 0 && c.alpha > 0;
+const CLEAR = new Cogl.Color({red: 0, green: 0, blue: 0, alpha: 0});
 
 export default class BorshevikGlassExtension extends Extension {
     enable() {
@@ -88,16 +83,11 @@ export default class BorshevikGlassExtension extends Extension {
         this._accentFile = null;
         this._settings = this.getSettings();
 
-        // GNOME's alpha of each open folder's veil, for repainting it in a new case.
-        this._folderShades = new WeakMap();
         // The blur under each folder dialog's card (folder.js).
         this._backdrops = new WeakMap();
 
-        // Holds no picture: its theme node is where the folder veil's colour,
-        // written in the stylesheet, is read.
-        this._veilProbe = new St.Widget({style_class: 'borshevik-glass-folder-veil', visible: false});
-        Main.layoutManager.uiGroup.add_child(this._veilProbe);
-        // Likewise for GNOME's accent colour, which sets the dark glass's share of it.
+        // Holds no picture: its theme node is where GNOME's accent colour, which
+        // sets the dark glass's share of it, is read.
         this._accentProbe = new St.Widget({style: 'background-color: -st-accent-color;', visible: false});
         Main.layoutManager.uiGroup.add_child(this._accentProbe);
         this._accentShare = null;
@@ -106,10 +96,7 @@ export default class BorshevikGlassExtension extends Extension {
         Main.layoutManager.connectObject('monitors-changed',
             () => this._rebuild(), this);
         St.ThemeContext.get_for_stage(global.stage).connectObject(
-            'notify::scale-factor', () => this._rebuild(),
-            // a reloaded theme may have a new veil colour
-            'changed', () => this._repaintVeils(),
-            this);
+            'notify::scale-factor', () => this._rebuild(), this);
         Main.layoutManager.overviewGroup.connectObject('child-added',
             (_, child) => this._onOverviewChildAdded(child), this);
         Main.layoutManager.uiGroup.connectObject('child-added',
@@ -157,7 +144,6 @@ export default class BorshevikGlassExtension extends Extension {
             dialog.disconnectObject(this);
             this._backdrops.get(dialog)?.destroy();
         });
-        this._folderShades = null;
         this._backdrops = null;
 
         if (this._gnomeSessionScheme !== null && OWN_SESSION_SCHEMES.includes(Main.sessionMode.colorScheme)) {
@@ -171,8 +157,6 @@ export default class BorshevikGlassExtension extends Extension {
             GLib.source_remove(this._accentIdleId);
         this._accentIdleId = 0;
         this._unloadAccentStyles();
-        this._veilProbe.destroy();
-        this._veilProbe = null;
         this._accentProbe.destroy();
         this._accentProbe = null;
         this._destroyActors();
@@ -208,7 +192,6 @@ export default class BorshevikGlassExtension extends Extension {
         else
             Main.layoutManager.uiGroup.add_style_class_name(LIGHT_STYLE);
         this._applyCase();
-        this._repaintVeils();
     }
 
     _isDark() {
@@ -241,11 +224,11 @@ export default class BorshevikGlassExtension extends Extension {
         let css = new TextDecoder().decode(template);
         for (const [scheme, base] of Object.entries(ACCENT_SHARES)) {
             const shares = scheme === 'dark' ? {...base, glass: darkGlass} : base;
-            const share = key => shares[key] * strength;
-            css = css
-                .replaceAll(`{{${scheme}-glass}}`, (1 - share('glass') / 100).toFixed(4))
-                .replaceAll(`{{${scheme}-surface}}`, share('surface').toFixed(3))
-                .replaceAll(`{{${scheme}-card}}`, share('card').toFixed(3));
+            for (const [key, share] of Object.entries(shares)) {
+                // the glass's is what is left clear of the accent widget
+                const value = key === 'glass' ? (1 - share * strength / 100).toFixed(4) : (share * strength).toFixed(3);
+                css = css.replaceAll(`{{${scheme}-${key}}}`, value);
+            }
         }
 
         const dir = Gio.File.new_for_path(GLib.build_filenamev([GLib.get_user_runtime_dir(), 'borshevik-glass']));
@@ -281,16 +264,6 @@ export default class BorshevikGlassExtension extends Extension {
             .filter(child => child instanceof AppDisplay.AppFolderDialog);
     }
 
-    // An open folder's veil follows the case; GNOME's own alpha for it is kept.
-    _repaintVeils() {
-        this._folders()?.forEach(dialog => {
-            const shade = this._folderShades.get(dialog);
-            if (shade !== undefined && !dialog.get_transition('background-color') &&
-                dialog.background_color.alpha > 0)
-                dialog.background_color = this._veil(shade);
-        });
-    }
-
     _rebuild() {
         this._destroyActors();
         this._build();
@@ -304,7 +277,6 @@ export default class BorshevikGlassExtension extends Extension {
         this._actors = [];
         this._surfaces = [];
         this._overviewGlass = null;
-        this._panelGlass = null;
         this._gapGlasses = [];
     }
 
@@ -340,7 +312,7 @@ export default class BorshevikGlassExtension extends Extension {
             for (const property of ['visible', 'opacity', 'translation-y'])
                 panelBox.bind_property(property, strip, property, GObject.BindingFlags.SYNC_CREATE);
 
-            const panelGlass = this._panelGlass = glass(primaryMonitor);
+            const panelGlass = glass(primaryMonitor);
             panelGlass.set_position(0, 0);
             strip.add_child(panelGlass);
 
@@ -374,43 +346,22 @@ export default class BorshevikGlassExtension extends Extension {
             this._watchFolder(child);
     }
 
-    // GNOME eases a folder dialog's background_color to its black veil as the
-    // folder opens; the running transition is retargeted to ours, or, when GNOME
-    // set the colour without animating, ours is set at once. What lies under
-    // the card is blurred by the dialog's backdrop (folder.js).
+    // GNOME eases a folder dialog's background_color to a black veil as the
+    // folder opens, lighter while an icon is dragged out over it, and back as it
+    // closes; the dialog is kept clear instead, the transition dropped as it
+    // starts (decisions#no-veil of folder-over-blur). What lies under the card is
+    // blurred by the dialog's backdrop (folder.js).
     _watchFolder(dialog) {
         if (!this._backdrops.has(dialog))
             this._backdrops.set(dialog, new FolderBackdrop(dialog));
 
         dialog.connectObject('notify::background-color', () => {
-            const transition = dialog.get_transition('background-color');
-            if (transition) {
-                const target = transition.get_interval().peek_final_value();
-                if (isGnomeVeil(target)) {
-                    this._folderShades.set(dialog, target.alpha);
-                    transition.set_to(this._veil(target.alpha));
-                }
-            } else if (isGnomeVeil(dialog.background_color)) {
-                this._folderShades.set(dialog, dialog.background_color.alpha);
-                dialog.background_color = this._veil(dialog.background_color.alpha);
-                return; // setting it notified again, and that call syncs the panel
-            }
-            this._syncPanelUnderVeil();
+            if (dialog.get_transition('background-color'))
+                dialog.remove_transition('background-color');
+            if (dialog.background_color.alpha !== 0)
+                dialog.background_color = CLEAR;
         }, this);
-    }
-
-    // The panel's glass lies above the overview, the folder's veil included, and
-    // would leave the panel bright over a veiled overview; while a folder is
-    // veiled it is hidden, and the panel shows the overview's glass — the same
-    // glass in the same place — veiled with the rest.
-    _syncPanelUnderVeil() {
-        if (this._panelGlass)
-            this._panelGlass.visible = !this._folders().some(d => d.background_color.alpha > 0);
-    }
-
-    _veil(gnomeAlpha) {
-        const {red, green, blue, alpha} = this._veilProbe.get_theme_node().get_background_color();
-        return new Cogl.Color({red, green, blue, alpha: Math.round(alpha * gnomeAlpha / GNOME_VEIL_ALPHA)});
+        dialog.background_color = CLEAR;
     }
 
     // A workspace switch adds one St.Widget per monitor to uiGroup, right above

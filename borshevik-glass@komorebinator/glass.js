@@ -16,7 +16,7 @@ import Shell from 'gi://Shell';
 import * as Background from 'resource:///org/gnome/shell/ui/background.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
-import {BAND_FADE, CASES, LIFT_GAIN, SAMPLE_WIDTH, analyse, analyseColour, liftFor, sample} from './adapt.js';
+import {BAND_FADE, CASES, SAMPLE_WIDTH, analyse, analyseColour, liftFor, sample} from './adapt.js';
 
 // Logical pixels, scaled by the monitor scale factor: Borshevik's Blur my Shell sigma.
 export const BLUR_RADIUS = 30;
@@ -29,8 +29,7 @@ export const BLUR_RADIUS = 30;
 // after. The texture is shown at that offset and size, the excess clipped.
 export const BAKE_MARGIN = {before: 2, after: 1};
 
-// The appearance lab's glass.lift (tests/appearance/glass.py), line for line:
-// sRGB to CIELAB with the same constants, the lightness set, the chroma
+// The lift: sRGB to CIELAB, as tests/vm/run.js checks it, the lightness set, the chroma
 // scaled, and back with every linear channel clamped; then the band under the
 // panel mixed in, full over the panel's height and fading out below it. The
 // texture covers the monitor with Clutter's padding (BAKE_MARGIN), so a
@@ -81,11 +80,12 @@ class BorshevikGlassLiftEffect extends Shell.GLSLEffect {
         this.add_glsl_snippet((Shell.SnippetHook ?? Cogl.SnippetHook).FRAGMENT, LIFT_DECLARATIONS, LIFT_CODE, false);
     }
 
-    setLift({target, chroma}, band, panel, size) {
+    // `fade` in pixels of the monitor
+    setLift({target, gain, chroma}, band, panel, fade, size) {
         const uniforms = [
-            ['target', 1, [target]], ['gain', 1, [LIFT_GAIN]], ['chroma', 1, [chroma]],
+            ['target', 1, [target]], ['gain', 1, [gain]], ['chroma', 1, [chroma]],
             ['size', 2, size], ['band', 4, [...band.rgb.map(v => v / 255), band.alpha]],
-            ['panel', 1, [panel]], ['fade', 1, [BAND_FADE]],
+            ['panel', 1, [panel]], ['fade', 1, [fade]],
         ];
         for (const [name, n, value] of uniforms)
             this.set_uniform_float(this.get_uniform_location(name), n, value);
@@ -213,7 +213,7 @@ export class MonitorGlass {
     }
 
     _panelFraction() {
-        // the lab's strip: the panel's height of the screen, as on the primary monitor
+        // the strip under the panel: the panel's height of the screen, as on the primary monitor
         return (Main.panel?.height || 32) / this._monitor.height;
     }
 
@@ -227,8 +227,7 @@ export class MonitorGlass {
             return;
         }
         const lift = {...liftFor(this._case.dark, this._stats, this._case.depth), dark: this._case.dark};
-        const baked = this._baked;
-        if (baked && baked.target === lift.target && baked.chroma === lift.chroma && baked.dark === lift.dark)
+        if (this._baked && ['target', 'gain', 'chroma', 'dark'].every(k => this._baked[k] === lift[k]))
             return;
         this._baking = true;
         this._baked = lift;
@@ -241,7 +240,7 @@ export class MonitorGlass {
         const liftEffect = new LiftEffect();
         const {before, after} = BAKE_MARGIN;
         const band = this._panel > 0 ? CASES[this._case.dark ? 'dark' : 'light'].band : {rgb: [0, 0, 0], alpha: 0};
-        liftEffect.setLift(this._baked, band, this._panel,
+        liftEffect.setLift(this._baked, band, this._panel, BAND_FADE * this._monitor.height,
             [this._monitor.width + before + after, this._monitor.height + before + after]);
         this._lifted.add_effect(liftEffect);
         const grab = new GrabEffect();

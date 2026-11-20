@@ -168,28 +168,28 @@ export const scenarios = [
             const shot = h.shot();
             const box = folderBox(h);
             const spot = {x: box.x + box.width - 100, y: box.y + 28, width: 4, height: 4};
-            // a light glassy card over the veiled, blurred overview; near its top corner
+            // a light glassy card over the blurred overview; near its top corner
             // nothing of the grid lies behind it
             h.expectColour('open folder', shot.region(spot),
-                h.over(h.over(h.glass('A', 'light'), h.veil('light')), h.surface('light', '.app-folder-dialog')), 15);
+                h.over(h.glass('A', 'light'), h.surface('light', '.app-folder-dialog-container .app-folder-dialog')), 15);
             // the wallpaper's glass is a flat field, so blurring it again leaves its colour
             h.expectColour('overview behind the folder', shot.region(h.besideFolder()),
-                h.over(h.glass('A', 'light'), h.veil('light')));
+                h.glass('A', 'light'));
             h.expectFolderBlur(true);
             h.expectNoDynamicBlur();
         },
     },
     {
-        path: 'folder-over-blur#folder-dark-veil',
+        path: 'folder-over-blur#no-veil',
         run(h) {
             // GNOME inhibits animations in the test machine, which has no GPU; they are
-            // let through here, so the veil is set by a running transition, as on real
-            // hardware, and not at once
+            // let through here, so GNOME eases its veil in as on real hardware, and
+            // the extension must drop the running transition
             h.eval(`imports.gi.St.Settings.get().uninhibit_animations(); 'ok'`);
             try {
                 openFolder(h);
                 h.expectColour('overview behind the folder', h.shot().region(h.besideFolder()),
-                    h.over(h.glass('A', 'dark'), h.veil('dark')));
+                    h.glass('A', 'dark'));
                 h.expectFolderBlur(true);
             } finally {
                 h.eval(`imports.gi.St.Settings.get().inhibit_animations(); 'ok'`);
@@ -237,27 +237,26 @@ export const scenarios = [
         run(h) {
             openFolder(h);
             const withAccent = h.folderCard();
-            // the veil is the stylesheet's, with no accent in it, over the glass
+            // no veil and no accent beside the card: the glass as it is
             h.expectColour('overview behind the folder', h.shot().region(h.besideFolder()),
-                h.over(h.glass('A', 'dark'), h.veil('dark')), 4);
+                h.glass('A', 'dark'), 4);
             h.setSetting('accent-tint', false);
             const plain = h.folderCard();
-            const base = h.surface('dark', '.app-folder-dialog');
+            const base = h.surface('dark', '.app-folder-dialog-container .app-folder-dialog');
             if (Math.max(...plain.slice(0, 3).map((v, c) => Math.abs(v - base[c]))) > 1)
                 h.fail(`with the accent tint off the card is ${plain}, not accent.css's base ${base}`);
             if (withAccent.slice(0, 3).every((v, c) => Math.abs(v - plain[c]) <= 1))
                 h.fail(`the accent tint changed nothing on the card: ${withAccent} against ${plain}`);
             h.expectColour('overview behind the folder', h.shot().region(h.besideFolder()),
-                h.over(h.glass('A', 'dark'), h.veil('dark')), 4);
+                h.glass('A', 'dark'), 4);
         },
     },
     {
-        path: 'folder-over-blur#panel-veiled',
+        path: 'folder-over-blur#panel-unchanged',
         run(h) {
             openFolder(h);
-            // the panel shows the overview's glass, veiled and blurred with the rest
-            h.expectColour('panel strip', h.shot().region(h.panelStrip()),
-                h.over(h.glass('A', 'dark'), h.veil('dark')), 6);
+            // nothing veils the overview, so the panel is its own glass, as with no folder open
+            h.expectColour('panel strip', h.shot().region(h.panelStrip()), h.panelGlass('A', 'dark'), 6);
         },
     },
     {

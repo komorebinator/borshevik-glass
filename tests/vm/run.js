@@ -45,17 +45,6 @@ function run(argv, input = null) {
 
 const vm = (...args) => run(['bash', vmScript, ...args]);
 
-// The colour a rule of the stylesheet gives a style class, in the dark or the light case.
-function cssColour(scheme, styleClass) {
-    const css = new TextDecoder().decode(GLib.file_get_contents(`${repo}/${UUID}/stylesheet.css`)[1]);
-    const selector = scheme === 'light'
-        ? `\\.borshevik-glass-light \\.${styleClass}` : `\\n\\.${styleClass}`;
-    const m = css.match(new RegExp(`${selector}\\s*\\{[^}]*background-color:\\s*rgba\\(([^)]*)\\)`));
-    if (!m)
-        throw new Error(`no ${scheme} colour for .${styleClass} in stylesheet.css`);
-    return m[1].split(',').map(Number);
-}
-
 // A rule of accent.css, the template of the rules with the accent in them: the base
 // colour the accent is mixed into, the alpha, and which share of the accent it takes.
 function accentRule(scheme, selector) {
@@ -70,14 +59,13 @@ function accentRule(scheme, selector) {
     return {base: m[1].split(',').map(Number), alpha: 1 - Number(m[3]), share: m[2]};
 }
 
-// The glass as the extension bakes it — the appearance lab's glass.lift, kept here
+// The glass as the extension bakes it — the lift, kept here
 // apart from the extension's shader so the two are checked against each other — with
 // the lift the extension's own rules give the wallpaper (adapt.js: what is adapted to
 // the wallpaper is the rule's to say, what is drawn the shader's), and the accent's
 // shares: @BorshevikGlassExtension's guideline on the glass's colour and
 // behaviour#tint-tunable.
-const LIFT_GAIN = 0.3;
-const ACCENT_SHARES = {light: {glass: 8, surface: 25, card: 6}, dark: {surface: 12.5, card: 9}};
+const ACCENT_SHARES = {light: {glass: 8, surface: 25}, dark: {surface: 12.5}};
 
 const lin = v => (v /= 255) <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
 const unlin = v => 255 * (v <= 0.0031308 ? v * 12.92 : 1.055 * v ** (1 / 2.4) - 0.055);
@@ -92,9 +80,9 @@ function lab(rgb) {
     return [116 * f(y) - 16, 500 * (f(x) - f(y)), 200 * (f(y) - f(z))];
 }
 
-function lift(rgb, target, chroma) {
+function lift(rgb, target, gain, chroma) {
     const [L0, A0, B0] = lab(rgb);
-    const L = Math.min(100, Math.max(0, target + LIFT_GAIN * (L0 - 50)));
+    const L = Math.min(100, Math.max(0, target + gain * (L0 - 50)));
     const fy = (L + 16) / 116, fx = fy + A0 * chroma / 500, fz = fy - B0 * chroma / 200;
     const x = finv(fx) * 0.95047, y = finv(fy), z = finv(fz) * 1.08883;
     return [3.2406 * x - 1.5372 * y - 0.4986 * z, -0.9689 * x + 1.8758 * y + 0.0415 * z,
@@ -362,8 +350,8 @@ function helpers(scenario) {
             const [a, b] = WALLPAPERS[wallpaper];
             const flat = a.map((v, c) => (v + b[c]) / 2);
             const depth = (settings[`${scheme}-depth-scale`] ?? 100) / 100;
-            const {target, chroma} = liftFor(scheme === 'dark', analyseColour(flat), depth);
-            let lifted = lift(flat, target, chroma);
+            const {target, gain, chroma} = liftFor(scheme === 'dark', analyseColour(flat), depth);
+            let lifted = lift(flat, target, gain, chroma);
             if (underPanel) {
                 const {rgb, alpha} = CASES[scheme].band;
                 lifted = h.over(lifted, [...rgb, alpha]);
@@ -372,9 +360,6 @@ function helpers(scenario) {
         },
         panelGlass(wallpaper, scheme) {
             return h.glass(wallpaper, scheme, {underPanel: true});
-        },
-        veil(scheme) {
-            return cssColour(scheme, 'borshevik-glass-folder-veil');
         },
         expectColour(what, {mean}, expected, tolerance = 10) {
             const off = Math.max(...mean.map((v, c) => Math.abs(v - expected[c])));
