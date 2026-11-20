@@ -12,8 +12,8 @@ neutral colours are replaced. Light: the popup the panes' grey with {{light-popu
 accent, its cards, buttons and submenus the dock's pane, the flat things GNOME paints in the
 popup's white clear. Dark: everything 10 % darker than GNOME's, the popup with
 {{dark-popup}} % of the accent, its cards, buttons and submenus with {{dark-popup-pane}} %,
-white text off-white with {{dark-popup-ink}} % and dimmed text with {{dark-popup-text}} %; in
-both cases the text takes {{…-popup-ink}} % of the accent and the dimmed text {{…-popup-text}} %. Run it again whenever GNOME Shell's theme changes:
+white text off-white; in both cases the text takes {{…-text}} % of the accent and the dimmed
+text {{…-dim-text}} %. Run it again whenever GNOME Shell's theme changes:
 
     tools/popups.py [gnome-shell-light.css gnome-shell-dark.css]
 
@@ -53,13 +53,13 @@ def recolour_light(colour, selector, prop='background-color'):
     if prop == 'color':
         # GNOME's text takes a little of the accent, its dimmed text — grey, or the text's
         # colour made translucent — more
-        dim = 'st-mix(-st-accent-color, @ink@, {{light-popup-text}}%)'
+        dim = 'st-mix(-st-accent-color, @ink@, {{light-dim-text}}%)'
         for grey in LIGHT_DIM:
             colour = colour.replace(grey, dim.replace('@ink@', grey))
         colour = re.sub(r'rgba\(34, 34, 38, ([\d.]+)\)',
                         lambda m: f'st-transparentize({dim}, {1 - float(m[1]):.2f})', colour)
         colour = colour.replace('st-transparentize(#222226,', f'st-transparentize({dim},')
-        colour = colour.replace('#222226', 'st-mix(-st-accent-color, #222226, {{light-popup-ink}}%)')
+        colour = colour.replace('#222226', 'st-mix(-st-accent-color, #222226, {{light-text}}%)')
         return colour.replace('@ink@', '#222226')
     for grey in ('st-mix(#222226, #fafafb, 12%)', 'st-mix(#222226, #ececf0, 12%)', '#cacad4'):
         colour = colour.replace(grey, PANE)
@@ -93,12 +93,12 @@ DARK_GREYS = ('st-mix(#ffffff, #36363a, 9%)', 'st-mix(#ffffff, #4a4a4f, 9%)',
 def recolour_dark(colour, selector, prop='background-color'):
     if prop == 'color':
         # GNOME's dimmed text — grey, or white at half — takes a little of the accent
-        colour = colour.replace('#b2b2b4', 'st-mix(-st-accent-color, #b2b2b4, {{dark-popup-text}}%)')
+        colour = colour.replace('#b2b2b4', 'st-mix(-st-accent-color, #b2b2b4, {{dark-dim-text}}%)')
         # GNOME's white text, off white over the darker popup
         if colour == '#ffffff':
-            return f'st-mix(-st-accent-color, {DARK_WHITE}, {{{{dark-popup-ink}}}}%)'
+            return f'st-mix(-st-accent-color, {DARK_WHITE}, {{{{dark-text}}}}%)'
         return colour.replace('st-transparentize(#ffffff, 0.5)',
-                              'st-transparentize(st-mix(-st-accent-color, #ffffff, {{dark-popup-text}}%), 0.5)')
+                              'st-transparentize(st-mix(-st-accent-color, #ffffff, {{dark-dim-text}}%), 0.5)')
     # GNOME's greys lighter than the popup keep their lightness and take the dark surfaces'
     # share of the accent, the hue of the dock; marked first, so the popup's own grey inside
     # them is not taken for the popup

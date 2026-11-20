@@ -39,8 +39,8 @@ const OWN_SESSION_SCHEMES = [LIGHT_SESSION_SCHEME, DARK_SESSION_SCHEME];
 // on a real screen. The dark glass's share depends on the accent itself
 // (adapt.js).
 const ACCENT_SHARES = {
-    light: {glass: 8, surface: 25, popup: 4, 'popup-ink': 15, 'popup-text': 20},
-    dark: {surface: 12.5, popup: 2, 'popup-pane': 7, 'popup-ink': 7, 'popup-text': 20},
+    light: {glass: 8, surface: 25, popup: 4, text: 15, 'dim-text': 20},
+    dark: {surface: 12.5, popup: 2, 'popup-pane': 7, text: 7, 'dim-text': 20},
 };
 
 // How much the light Quick Settings dim while a toggle's menu is open, as GNOME's
@@ -48,7 +48,7 @@ const ACCENT_SHARES = {
 const LIGHT_QUICK_SETTINGS_DIM = -0.15;
 
 // The shares of the popups' text, none with the text tint switched off.
-const TEXT_SHARES = ['popup-ink', 'popup-text'];
+const TEXT_SHARES = ['text', 'dim-text'];
 
 // The settings the glass is baked with, and those the accent stylesheet is.
 const DEPTH_KEYS = ['dark-depth-scale', 'light-depth-scale'];

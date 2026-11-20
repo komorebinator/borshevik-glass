@@ -66,8 +66,8 @@ function accentRule(scheme, selector) {
 // shares: @BorshevikGlassExtension's guideline on the glass's colour and
 // behaviour#tint-tunable.
 const ACCENT_SHARES = {
-    light: {glass: 8, surface: 25, popup: 4, 'popup-ink': 15, 'popup-text': 20},
-    dark: {surface: 12.5, popup: 2, 'popup-pane': 7, 'popup-ink': 7, 'popup-text': 20},
+    light: {glass: 8, surface: 25, popup: 4, text: 15, 'dim-text': 20},
+    dark: {surface: 12.5, popup: 2, 'popup-pane': 7, text: 7, 'dim-text': 20},
 };
 
 const lin = v => (v /= 255) <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;

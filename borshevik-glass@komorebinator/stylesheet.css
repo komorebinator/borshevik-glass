@@ -43,12 +43,17 @@
   box-shadow: none;
 }
 
-/* The dock, folder tiles and an open folder's card are panes of glass, each
-   with a fine outline, light here, dark in the light case; an inset shadow
-   rather than a border, which would grow them. */
+/* The dock, folder tiles, an open folder's card, the search entry, the search
+   results' sections and a found app as it is highlighted are panes of glass,
+   each with a fine outline, light here, dark in the light case; an inset
+   shadow rather than a border, which would grow them. */
 #dash .dash-background,
 .overview-tile.app-folder,
-.app-folder-dialog-container .app-folder-dialog {
+.app-folder-dialog-container .app-folder-dialog,
+#overview .search-entry,
+.search-section-content,
+.grid-search-results .overview-tile:hover,
+.grid-search-results .overview-tile:selected {
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
@@ -71,7 +76,11 @@
 /* The panes' outline: dark on the light glass. */
 .borshevik-glass-light #dash .dash-background,
 .borshevik-glass-light .overview-tile.app-folder,
-.borshevik-glass-light .app-folder-dialog-container .app-folder-dialog {
+.borshevik-glass-light .app-folder-dialog-container .app-folder-dialog,
+.borshevik-glass-light #overview .search-entry,
+.borshevik-glass-light .search-section-content,
+.borshevik-glass-light .grid-search-results .overview-tile:hover,
+.borshevik-glass-light .grid-search-results .overview-tile:selected {
   box-shadow: inset 0 0 0 1px rgba(34, 34, 38, 0.12);
 }
 
@@ -120,7 +129,6 @@
 
 .borshevik-glass-light .search-entry,
 .borshevik-glass-light .app-folder-dialog .folder-name-container .folder-name-entry,
-.borshevik-glass-light .search-entry StLabel.hint-text,
 .borshevik-glass-light .app-folder-dialog .folder-name-container .folder-name-entry StLabel.hint-text {
   color: rgba(34, 34, 38, 0.7);
 }
