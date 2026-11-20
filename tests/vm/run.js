@@ -65,7 +65,10 @@ function accentRule(scheme, selector) {
 // the wallpaper is the rule's to say, what is drawn the shader's), and the accent's
 // shares: @BorshevikGlassExtension's guideline on the glass's colour and
 // behaviour#tint-tunable.
-const ACCENT_SHARES = {light: {glass: 8, surface: 25}, dark: {surface: 12.5}};
+const ACCENT_SHARES = {
+    light: {glass: 8, surface: 25, popup: 4, 'popup-ink': 15, 'popup-text': 20},
+    dark: {surface: 12.5, popup: 2, 'popup-pane': 7, 'popup-ink': 7, 'popup-text': 20},
+};
 
 const lin = v => (v /= 255) <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
 const unlin = v => 255 * (v <= 0.0031308 ? v * 12.92 : 1.055 * v ** (1 / 2.4) - 0.055);
@@ -235,6 +238,10 @@ function helpers(scenario) {
         },
         // a surface of accent.css on the glass, as [r, g, b, alpha]: its base colour with
         // its share of the accent mixed in
+        // the accent's share of a kind in a scheme, in per cent at strength 100 %
+        accentShare(scheme, key) {
+            return ACCENT_SHARES[scheme][key];
+        },
         surface(scheme, selector) {
             const {base, alpha, share} = accentRule(scheme, selector);
             const k = ACCENT_SHARES[scheme][share] / 100 * h.accentStrength();

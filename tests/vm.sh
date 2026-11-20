@@ -22,6 +22,8 @@ usage: $0 setup [image]     make the machine's disk from a bootc image with GNOM
                              (Dark Style off) or prefer-light
        $0 wallpaper <file>  make an image tester's wallpaper in both schemes
        $0 scenarios [filter] act out the scenarios of tests/scenarios.js in tester's session
+       $0 styles [filter]   photograph GNOME's popups in every state, case and accent, one sheet
+                             per state, in glass-styles/ of the machine's directory
        $0 shot [file]       save a screenshot (default: screen.png in the machine's directory)
        $0 stop              power it off
 EOF
@@ -375,6 +377,11 @@ cmd_scenarios() {
     gjs -m "$repo_root/tests/vm/run.js" "$@"
 }
 
+cmd_styles() {
+    need_running
+    gjs -m "$repo_root/tests/vm/styles.js" "$@"
+}
+
 cmd_shot() {
     need_running
     local out="${1:-$dir/screen.png}"
@@ -424,6 +431,7 @@ case "$cmd" in
     scheme)  cmd_scheme "$@" ;;
     wallpaper) cmd_wallpaper "$@" ;;
     scenarios) cmd_scenarios "$@" ;;
+    styles)  cmd_styles "$@" ;;
     shot)    cmd_shot "$@" ;;
     stop)    cmd_stop ;;
     *)       usage ;;

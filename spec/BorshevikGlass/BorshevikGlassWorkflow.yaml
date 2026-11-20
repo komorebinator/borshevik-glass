@@ -56,10 +56,19 @@ steps:
     description: The change reaches users through Borshevik's `:stable`.
     when: "`:stable` resolves to a Borshevik image built after the change was pushed"
 components:
+  - id: popups-script
+    type: "@Script"
+    src:
+      - tools/popups.py
+    description: "Writes the popups' rules into accent.css (@BorshevikGlassExtension#behaviour#popups) from GNOME Shell's own light and dark stylesheets: every rule of a popup's colours, copied under the case's style class in GNOME's order with its neutral colours replaced. Its rules are not edited by hand: a change of look goes into the script, which is run again."
+    functions:
+      - id: generate
+        description: "`tools/popups.py [gnome-shell-light.css gnome-shell-dark.css]` — reads GNOME's stylesheets, from the files given or from the GNOME Shell installed (gresource), and replaces the generated block of accent.css, saying how many rules it wrote per case and from which GNOME Shell. Run it with the host's python3 whenever Borshevik moves to a new GNOME release, and look at the popups again in both cases."
   - id: test-vm
     type: "@Script"
     src:
       - tests/vm.sh
+      - tests/vm/styles.js
       - tests/vm/unsafe-mode@borshevik-test/extension.js
       - tests/vm/unsafe-mode@borshevik-test/metadata.json
       - tests/scenarios.js
@@ -74,6 +83,8 @@ components:
         description: "`vm.sh pointer <x> <y>...` — moves the pointer through points of the screen, in its pixels, a moment apart, through the machine's usb-tablet, whose absolute axes span the whole screen. A hover is what the shell repaints in part, which setting an actor's hover from Eval does not reproduce: the steps the folder's dynamic blur left around a hovered icon showed only with the pointer."
       - id: scenarios
         description: "`vm.sh scenarios [filter]` — runs tests/vm/run.js with the host's gjs, which acts out every scenario of tests/scenarios.js whose path contains <filter> in tester's session and prints ok, FAIL or SKIP for each, with what was expected and what was found on a failure, and a screenshot of each in the machine's directory. Its `when` is done the way a user would — keys through QMP for the overview, the app grid and a workspace switch, `scheme` and `wallpaper` for the settings — and its `then` is judged against what can be seen: pixels of the screenshot sampled where a surface is — the panel's strip, the overview's background, the dash, an open folder — and compared with the same places of the wallpaper and with GNOME's own colours, so a surface left solid, left transparent over nothing or tinted with the wrong scheme fails; and, through Eval, which actors the extension added and whether any of them carries a blur effect in BACKGROUND mode, which none may. A scenario only a person can judge — whether a tint looks right — is marked so and skipped. Exits 1 when any scenario failed."
+      - id: styles
+        description: "`vm.sh styles [filter]` — runs tests/vm/styles.js with the host's gjs: the styles stand, for what the scenarios cannot judge. It brings GNOME's popups in tester's session through each state worth looking at — Quick Settings, with a toggle's menu open, the calendar empty and with stacked notifications from two sources, a notification banner, an app's menu in the dash, a dialog — in both cases and every one of GNOME's accent colours, with GNOME's own popups first, the extension disabled, for comparison; photographs each, and lays a state out on one sheet, a column per accent and a row per case, in glass-styles/ of the machine's directory, the single photographs in glass-styles/shots/. Nothing is checked: the sheets are for the author and the agent to look through, and a defect seen there becomes a scenario where pixels can show it."
 recipes:
   - id: try_in_vm
     description: Tries the working tree in the shared test machine (test-vm) by running its scenarios against the real shell; what is left to a person is how it looks, and that is the author's own try.

@@ -21,6 +21,9 @@ const WORKSPACE_ANIMATION_STYLE = 'workspace-animation';
 // On Main.uiGroup while GNOME's dark style is off and the light style on: the
 // stylesheet's light rules.
 const LIGHT_STYLE = 'borshevik-glass-light';
+// On it otherwise: the dark popups' rules, which GNOME's own dark selectors
+// would otherwise tie with.
+const DARK_STYLE = 'borshevik-glass-dark';
 
 // The session mode colour schemes the extension sets: under the first GNOME Shell
 // is dark only for prefer-dark, under the second always, with the light style off.
@@ -29,18 +32,27 @@ const DARK_SESSION_SCHEME = 'force-dark';
 const OWN_SESSION_SCHEMES = [LIGHT_SESSION_SCHEME, DARK_SESSION_SCHEME];
 
 // The accent's share, in per cent at an accent strength of 100 %, of the
-// surfaces on the glass — an open folder's card among them — per case, and of
-// the light glass: the dark case's surfaces take half of the light one's, at
-// which the author found them right on a real screen. The dark glass's share
-// depends on the accent itself (adapt.js).
+// surfaces on the glass — an open folder's card among them — and of the popups,
+// a tint at the edge of being seen, their text and their dimmed text, per case;
+// of the light glass; and of the dark popups' cards and buttons: the dark case's
+// surfaces take half of the light one's, at which the author found them right
+// on a real screen. The dark glass's share depends on the accent itself
+// (adapt.js).
 const ACCENT_SHARES = {
-    light: {glass: 8, surface: 25},
-    dark: {surface: 12.5},
+    light: {glass: 8, surface: 25, popup: 4, 'popup-ink': 15, 'popup-text': 20},
+    dark: {surface: 12.5, popup: 2, 'popup-pane': 7, 'popup-ink': 7, 'popup-text': 20},
 };
+
+// How much the light Quick Settings dim while a toggle's menu is open, as GNOME's
+// brightness (its own is -0.4).
+const LIGHT_QUICK_SETTINGS_DIM = -0.15;
+
+// The shares of the popups' text, none with the text tint switched off.
+const TEXT_SHARES = ['popup-ink', 'popup-text'];
 
 // The settings the glass is baked with, and those the accent stylesheet is.
 const DEPTH_KEYS = ['dark-depth-scale', 'light-depth-scale'];
-const ACCENT_KEYS = ['accent-tint', 'accent-scale'];
+const ACCENT_KEYS = ['accent-tint', 'accent-scale', 'text-tint'];
 
 // What one surface shows of a monitor's glass: the baked content, and the
 // accent over it, coloured by the accent stylesheet.
@@ -130,6 +142,8 @@ export default class BorshevikGlassExtension extends Extension {
         this._build();
         this._syncScheme();
         this._folders().forEach(dialog => this._watchFolder(dialog));
+        this._quickSettingsMenu()?._dimEffect?.connectObject('notify::brightness',
+            () => this._softenQuickSettingsDim(), this);
     }
 
     disable() {
@@ -137,6 +151,7 @@ export default class BorshevikGlassExtension extends Extension {
         St.ThemeContext.get_for_stage(global.stage).disconnectObject(this);
         Main.layoutManager.overviewGroup.disconnectObject(this);
         Main.layoutManager.uiGroup.disconnectObject(this);
+        this._quickSettingsMenu()?._dimEffect?.disconnectObject(this);
         St.Settings.get().disconnectObject(this);
         Main.sessionMode.disconnectObject(this);
         this._settings.disconnectObject(this);
@@ -153,6 +168,7 @@ export default class BorshevikGlassExtension extends Extension {
         this._gnomeSessionScheme = null;
 
         Main.layoutManager.uiGroup.remove_style_class_name(LIGHT_STYLE);
+        Main.layoutManager.uiGroup.remove_style_class_name(DARK_STYLE);
         if (this._accentIdleId)
             GLib.source_remove(this._accentIdleId);
         this._accentIdleId = 0;
@@ -187,10 +203,14 @@ export default class BorshevikGlassExtension extends Extension {
     _syncScheme() {
         const dark = !this._settings.get_boolean('light-style') ||
             St.Settings.get().color_scheme === St.SystemColorScheme.PREFER_DARK;
-        if (dark)
-            Main.layoutManager.uiGroup.remove_style_class_name(LIGHT_STYLE);
-        else
-            Main.layoutManager.uiGroup.add_style_class_name(LIGHT_STYLE);
+        const {uiGroup} = Main.layoutManager;
+        if (dark) {
+            uiGroup.remove_style_class_name(LIGHT_STYLE);
+            uiGroup.add_style_class_name(DARK_STYLE);
+        } else {
+            uiGroup.remove_style_class_name(DARK_STYLE);
+            uiGroup.add_style_class_name(LIGHT_STYLE);
+        }
         this._applyCase();
     }
 
@@ -222,8 +242,11 @@ export default class BorshevikGlassExtension extends Extension {
             ? this._settings.get_int('accent-scale') / 100 : 0;
         const [, template] = this.dir.get_child('accent.css').load_contents(null);
         let css = new TextDecoder().decode(template);
+        const textTint = this._settings.get_boolean('text-tint');
         for (const [scheme, base] of Object.entries(ACCENT_SHARES)) {
-            const shares = scheme === 'dark' ? {...base, glass: darkGlass} : base;
+            const shares = scheme === 'dark' ? {...base, glass: darkGlass} : {...base};
+            if (!textTint)
+                TEXT_SHARES.forEach(key => (shares[key] = 0));
             for (const [key, share] of Object.entries(shares)) {
                 // the glass's is what is left clear of the accent widget
                 const value = key === 'glass' ? (1 - share * strength / 100).toFixed(4) : (share * strength).toFixed(3);
@@ -366,6 +389,29 @@ export default class BorshevikGlassExtension extends Extension {
 
     // A workspace switch adds one St.Widget per monitor to uiGroup, right above
     // global.window_group; its background is made transparent by the
+    _quickSettingsMenu() {
+        return Main.panel.statusArea.quickSettings?.menu ?? null;
+    }
+
+    // GNOME dims Quick Settings while a toggle's menu is open, easing the brightness
+    // of an effect on the whole popup down by 40 %, which turns a light popup grey; in
+    // the light case the running transition is retargeted to a gentler dim, or, when
+    // GNOME dimmed without animating, that is set at once (`behaviour#popups`).
+    _softenQuickSettingsDim() {
+        if (this._isDark())
+            return;
+        const menu = this._quickSettingsMenu();
+        const soft = Math.round(127 * (1 + LIGHT_QUICK_SETTINGS_DIM));
+        const gentle = new Cogl.Color({red: soft, green: soft, blue: soft, alpha: 255});
+        const transition = menu._boxPointer?.get_transition('@effects.dim.brightness');
+        if (transition) {
+            if (transition.get_interval().peek_final_value().red < soft)
+                transition.set_to(gentle);
+        } else if (menu._dimEffect.brightness.red < soft) {
+            menu._dimEffect.brightness = gentle;
+        }
+    }
+
     // stylesheet, and the monitor's glass goes right under it while it lives.
     _onUiChildAdded(child) {
         if (!(child instanceof St.Widget) || !child.has_style_class_name(WORKSPACE_ANIMATION_STYLE))

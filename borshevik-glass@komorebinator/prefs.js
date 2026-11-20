@@ -54,6 +54,13 @@ export default class BorshevikGlassPreferences extends ExtensionPreferences {
         const accentAmount = sliderRow(settings, 'accent-scale', _('Accent amount'), 50, 150);
         settings.bind('accent-tint', accentAmount, 'visible', Gio.SettingsBindFlags.GET);
         tint.add(accentAmount);
+        const textTint = new Adw.SwitchRow({
+            title: _('Tinted text'),
+            subtitle: _('Give the text in menus, Quick Settings and the calendar a little of the accent colour'),
+        });
+        settings.bind('text-tint', textTint, 'active', Gio.SettingsBindFlags.DEFAULT);
+        settings.bind('accent-tint', textTint, 'visible', Gio.SettingsBindFlags.GET);
+        tint.add(textTint);
         tint.add(sliderRow(settings, 'dark-depth-scale', _('Dark depth'), 50, 150));
         tint.add(sliderRow(settings, 'light-depth-scale', _('Light depth'), 50, 150));
         page.add(tint);

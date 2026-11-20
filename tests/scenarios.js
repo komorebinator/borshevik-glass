@@ -24,6 +24,23 @@ function openFolder(h) {
     h.sleep(1.5);
 }
 
+// What the theme gives a widget of these style classes and pseudo classes, in the
+// current case, as [r, g, b, alpha].
+const themeColour = (h, classes, pseudo = '') => JSON.parse(h.eval(`(() => {
+    const w = new (imports.gi.St.Widget)({style_class: '${classes}', pseudo_class: '${pseudo}'});
+    Main.layoutManager.uiGroup.add_child(w);
+    const c = w.get_theme_node().get_background_color();
+    w.destroy();
+    return JSON.stringify([c.red, c.green, c.blue, c.alpha / 255]);
+})()`));
+
+// A Quick Settings toggle switched on keeps GNOME's accent.
+function expectAccentToggle(h, accent) {
+    const on = themeColour(h, 'button quick-toggle', 'checked');
+    if (Math.max(...accent.map((v, c) => Math.abs(v - on[c]))) > 2)
+        h.fail(`a checked quick toggle is ${on}, not the accent ${accent}`);
+}
+
 const folderBox = h => h.actorBox(`global.stage.get_children().flatMap(function walk(a) {
     return [a, ...a.get_children().flatMap(walk)];
 }).find(a => a.has_style_class_name?.('app-folder-dialog') && a.is_mapped())`);
@@ -381,7 +398,7 @@ export const scenarios = [
         },
     },
     {
-        path: 'rest-left-to-gnome#menus-untouched',
+        path: 'popups#quick-settings',
         run(h) {
             const look = () => {
                 h.eval('Main.panel.statusArea.quickSettings.menu.open(false)');
@@ -394,10 +411,14 @@ export const scenarios = [
                 return mean;
             };
             const enabled = look();
+            // the popup's own colour where nothing lies on it, and not GNOME's
+            h.expectColour('Quick Settings with the extension', {mean: enabled, spread: 0},
+                themeColour(h, 'popup-menu-content').slice(0, 3), 4);
             h.setEnabled(false);
             const disabled = look();
             h.setEnabled(true);
-            h.expectColour('Quick Settings with the extension', {mean: enabled, spread: 0}, disabled, 4);
+            if (Math.max(...enabled.map((v, c) => Math.abs(v - disabled[c]))) < 3)
+                h.fail(`Quick Settings look the same with the extension as without it: ${enabled.map(Math.round)}`);
         },
     },
     {
@@ -444,6 +465,50 @@ export const scenarios = [
             if (off < 2)
                 h.fail('the accent tint changed nothing on the dash');
             h.expectNoDynamicBlur();
+        },
+    },
+    {
+        path: 'popups#light-popup-tinted',
+        run(h) {
+            h.scheme('light');
+            const accent = h.accentColour();
+            const k = h.accentShare('light', 'popup') / 100 * h.accentStrength();
+            // the popup: the panes' grey with a touch of the accent, opaque, not GNOME's near-white
+            const popup = themeColour(h, 'popup-menu-content');
+            const want = [245, 245, 246].map((v, c) => v * (1 - k) + accent[c] * k);
+            if (Math.max(...want.map((v, c) => Math.abs(v - popup[c]))) > 2 || popup[3] < 0.99)
+                h.fail(`a light popup is ${popup}, not ${want.map(Math.round)} opaque`);
+            // a button in it: the dock's pane; a card: the pane as it shows over the popup,
+            // opaque, since GNOME stacks cards and shows a banner over windows
+            const pane = h.surface('light', '#dash .dash-background');
+            const card = [...h.over(popup.slice(0, 3), pane), 1];
+            for (const [classes, want] of [['button quick-toggle', pane], ['message', card]]) {
+                const found = themeColour(h, classes);
+                if (Math.max(...want.map((v, c) => Math.abs(v - found[c]) / (c === 3 ? 1 / 255 : 1))) > 2)
+                    h.fail(`.${classes.replace(' ', '.')} in a light popup is ${found}, not ${want.map(v => v.toFixed(2))}`);
+            }
+            expectAccentToggle(h, accent);
+        },
+    },
+    {
+        path: 'popups#dark-popup-tinted',
+        run(h) {
+            h.scheme('dark');
+            const accent = h.accentColour();
+            // GNOME's dark popup is #36363a; the extension's is darker, opaque, and leans to the accent
+            const popup = themeColour(h, 'popup-menu-content');
+            const lightness = ([r, g, b]) => 0.2126 * r + 0.7152 * g + 0.0722 * b;
+            if (!(lightness(popup) < lightness([0x36, 0x36, 0x3a]) - 4) || popup[3] < 0.99)
+                h.fail(`a dark popup is ${popup}, not darker than GNOME's #36363a and opaque`);
+            const card = themeColour(h, 'message');
+            if (!(lightness(card) > lightness(popup) + 10))
+                h.fail(`a dark popup's card is ${card}, not lighter than the popup ${popup}`);
+            // tinted: off grey, and toward the accent
+            const offGrey = c => [0, 1, 2].map(i => c[i] - (c[0] + c[1] + c[2]) / 3);
+            const lean = offGrey(card).reduce((sum, v, i) => sum + v * offGrey(accent)[i], 0);
+            if (!(Math.max(...offGrey(card).map(Math.abs)) > 1.5 && lean > 0))
+                h.fail(`a dark popup's card ${card} does not lean to the accent ${accent}`);
+            expectAccentToggle(h, accent);
         },
     },
     {
