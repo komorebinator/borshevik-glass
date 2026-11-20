@@ -1,0 +1,42 @@
+{
+ "name": "shipped-2026-11-04-dark",
+ "date": "2026-11-04",
+ "source": {
+  "look": "shipped"
+ },
+ "note": "The dark case as the extension drew it on 2026-11-04: fine on every kind of wallpaper; the author finds it right.",
+ "look": {
+  "base": [
+   0,
+   3,
+   4
+  ],
+  "depth": 0.8,
+  "accent": 0.1,
+  "text": [
+   250,
+   250,
+   251
+  ],
+  "surface": [
+   100,
+   100,
+   100,
+   0.35
+  ],
+  "card": [
+   20,
+   22,
+   26,
+   0.85
+  ],
+  "card_share": 0.35,
+  "veil": [
+   0,
+   3,
+   4,
+   0.3
+  ]
+ },
+ "case": "dark"
+}

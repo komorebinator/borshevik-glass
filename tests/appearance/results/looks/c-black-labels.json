@@ -1,0 +1,65 @@
+{
+ "name": "c-black-labels",
+ "date": "2026-11-04",
+ "source": {
+  "round": "r8",
+  "variant": "2",
+  "label": "2 — подписи чёрные"
+ },
+ "note": "C with the overview app labels black: the reference since round 8.",
+ "look": {
+  "base": [
+   250,
+   250,
+   251
+  ],
+  "depth": 0.55,
+  "accent": 0.25,
+  "text": [
+   34,
+   34,
+   38
+  ],
+  "surface": [
+   255,
+   255,
+   255,
+   0.5
+  ],
+  "card": [
+   250,
+   250,
+   251,
+   0.6
+  ],
+  "card_share": 0.5,
+  "veil": [
+   0,
+   3,
+   4,
+   0.2
+  ],
+  "sat": 3.0,
+  "panel_depth": 0.8,
+  "panel_sat": 3.0,
+  "surfaces_like_panel": true,
+  "dash_border": [
+   34,
+   34,
+   38,
+   30
+  ],
+  "tile_border": [
+   34,
+   34,
+   38,
+   30
+  ],
+  "label_color": [
+   0,
+   0,
+   0
+  ]
+ },
+ "case": "light"
+}

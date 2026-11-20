@@ -1,0 +1,710 @@
+{
+ "look": "reference",
+ "kept_as": {
+  "dark": "dark-pastel-half-accent",
+  "light": "pastel-panel-as-overview"
+ },
+ "params": {
+  "dark": {
+   "base": [
+    0,
+    3,
+    4
+   ],
+   "depth": 0.8,
+   "accent": 0.1,
+   "text": [
+    250,
+    250,
+    251
+   ],
+   "surface": [
+    100,
+    100,
+    100,
+    0.35
+   ],
+   "card": [
+    20,
+    22,
+    26,
+    0.85
+   ],
+   "card_share": 0.35,
+   "veil": [
+    0,
+    3,
+    4,
+    0.3
+   ],
+   "lift": [
+    12,
+    0.3,
+    0.5
+   ],
+   "lift_accent": 0.04,
+   "surface_accent": 0.125,
+   "card_accent": 0.03
+  },
+  "light": {
+   "base": [
+    250,
+    250,
+    251
+   ],
+   "depth": 0.55,
+   "accent": 0.25,
+   "text": [
+    34,
+    34,
+    38
+   ],
+   "surface": [
+    255,
+    255,
+    255,
+    0.5
+   ],
+   "card": [
+    250,
+    250,
+    251,
+    0.6
+   ],
+   "card_share": 0.5,
+   "veil": [
+    0,
+    3,
+    4,
+    0.2
+   ],
+   "sat": 3.0,
+   "panel_depth": 0.8,
+   "panel_sat": 3.0,
+   "surfaces_like_panel": true,
+   "dash_border": [
+    34,
+    34,
+    38,
+    30
+   ],
+   "tile_border": [
+    34,
+    34,
+    38,
+    30
+   ],
+   "lift": [
+    80,
+    0.3,
+    1.0
+   ],
+   "lift_accent": 0.08,
+   "card_accent": 0.06
+  }
+ },
+ "collection": "system",
+ "accent": "purple",
+ "date": "2026-11-19",
+ "screen": "1728x1080",
+ "composition": {
+  "wallpapers": 60,
+  "dark": 16,
+  "medium": 26,
+  "light": 18,
+  "muted": 14,
+  "moderate": 12,
+  "colourful": 34,
+  "busy": 8
+ },
+ "cases": {
+  "dark": {
+   "all": {
+    "panel_text": {
+     "min": 9.84,
+     "p5": 10.36,
+     "median": 13.53,
+     "p95": 18.72,
+     "max": 19.3,
+     "below_4_5": 0,
+     "below_3": 0
+    },
+    "grid_text": {
+     "min": 9.81,
+     "p5": 10.14,
+     "median": 12.87,
+     "p95": 16.94,
+     "max": 19.3,
+     "below_4_5": 0,
+     "below_3": 0
+    },
+    "dock_text": {
+     "min": 8.18,
+     "p5": 8.45,
+     "median": 11.14,
+     "p95": 13.72,
+     "max": 14.33,
+     "below_4_5": 0,
+     "below_3": 0
+    },
+    "card_text": {
+     "min": 16.48,
+     "p5": 16.53,
+     "median": 16.86,
+     "p95": 17.3,
+     "max": 17.48,
+     "below_4_5": 0,
+     "below_3": 0
+    },
+    "dock_sep": {
+     "min": 5.79,
+     "p5": 6.86,
+     "median": 13.34,
+     "p95": 16.34,
+     "max": 19.27
+    },
+    "card_sep": {
+     "min": 1.62,
+     "p5": 3.95,
+     "median": 8.16,
+     "p95": 21.16,
+     "max": 22.46
+    },
+    "L_panel": {
+     "min": 1.22,
+     "p5": 1.72,
+     "median": 10.6,
+     "p95": 23.14,
+     "max": 26.02
+    },
+    "L_overview": {
+     "min": 1.11,
+     "p5": 2.33,
+     "median": 11.15,
+     "p95": 21.13,
+     "max": 25.73
+    },
+    "see_through": {
+     "min": 0.0,
+     "p5": 0.19,
+     "median": 0.29,
+     "p95": 0.32,
+     "max": 0.32
+    },
+    "chroma": {
+     "min": 2.47,
+     "p5": 3.31,
+     "median": 18.07,
+     "p95": 32.45,
+     "max": 46.96
+    },
+    "chroma_p99": {
+     "min": 3.7,
+     "p5": 6.38,
+     "median": 28.18,
+     "p95": 50.09,
+     "max": 56.43
+    },
+    "accent_de": {
+     "min": 0.0,
+     "p5": 0.0,
+     "median": 0.0,
+     "p95": 0.0,
+     "max": 0.0
+    }
+   },
+   "by_lightness": {
+    "dark": {
+     "panel_text": {
+      "min": 12.78,
+      "p5": 13.25,
+      "median": 16.8,
+      "p95": 19.09,
+      "max": 19.3,
+      "below_4_5": 0,
+      "below_3": 0
+     },
+     "grid_text": {
+      "min": 11.99,
+      "p5": 13.71,
+      "median": 16.12,
+      "p95": 19.27,
+      "max": 19.3,
+      "below_4_5": 0,
+      "below_3": 0
+     },
+     "dock_text": {
+      "min": 10.71,
+      "p5": 11.55,
+      "median": 12.92,
+      "p95": 14.28,
+      "max": 14.33,
+      "below_4_5": 0,
+      "below_3": 0
+     },
+     "card_text": {
+      "min": 16.73,
+      "p5": 16.9,
+      "median": 17.2,
+      "p95": 17.48,
+      "max": 17.48,
+      "below_4_5": 0,
+      "below_3": 0
+     },
+     "L_panel": {
+      "min": 1.22,
+      "p5": 1.23,
+      "median": 4.39,
+      "p95": 8.12,
+      "max": 9.8
+     },
+     "L_overview": {
+      "min": 1.11,
+      "p5": 1.66,
+      "median": 3.71,
+      "p95": 6.94,
+      "max": 7.2
+     },
+     "chroma": {
+      "min": 2.47,
+      "p5": 2.78,
+      "median": 7.94,
+      "p95": 24.79,
+      "max": 29.18
+     }
+    },
+    "medium": {
+     "panel_text": {
+      "min": 9.84,
+      "p5": 10.85,
+      "median": 14.85,
+      "p95": 16.44,
+      "max": 16.98,
+      "below_4_5": 0,
+      "below_3": 0
+     },
+     "grid_text": {
+      "min": 9.81,
+      "p5": 10.04,
+      "median": 12.71,
+      "p95": 16.29,
+      "max": 16.69,
+      "below_4_5": 0,
+      "below_3": 0
+     },
+     "dock_text": {
+      "min": 8.18,
+      "p5": 8.48,
+      "median": 11.22,
+      "p95": 12.56,
+      "max": 12.97,
+      "below_4_5": 0,
+      "below_3": 0
+     },
+     "card_text": {
+      "min": 16.48,
+      "p5": 16.53,
+      "median": 16.86,
+      "p95": 17.18,
+      "max": 17.21,
+      "below_4_5": 0,
+      "below_3": 0
+     },
+     "L_panel": {
+      "min": 3.22,
+      "p5": 6.98,
+      "median": 10.01,
+      "p95": 14.2,
+      "max": 14.45
+     },
+     "L_overview": {
+      "min": 7.49,
+      "p5": 8.13,
+      "median": 10.99,
+      "p95": 13.92,
+      "max": 14.09
+     },
+     "chroma": {
+      "min": 4.81,
+      "p5": 7.24,
+      "median": 22.03,
+      "p95": 34.79,
+      "max": 46.96
+     }
+    },
+    "light": {
+     "panel_text": {
+      "min": 10.14,
+      "p5": 10.33,
+      "median": 12.34,
+      "p95": 13.17,
+      "max": 13.34,
+      "below_4_5": 0,
+      "below_3": 0
+     },
+     "grid_text": {
+      "min": 9.98,
+      "p5": 10.12,
+      "median": 11.22,
+      "p95": 13.09,
+      "max": 13.12,
+      "below_4_5": 0,
+      "below_3": 0
+     },
+     "dock_text": {
+      "min": 8.24,
+      "p5": 8.31,
+      "median": 9.63,
+      "p95": 10.84,
+      "max": 11.1,
+      "below_4_5": 0,
+      "below_3": 0
+     },
+     "card_text": {
+      "min": 16.5,
+      "p5": 16.5,
+      "median": 16.66,
+      "p95": 16.9,
+      "max": 16.91,
+      "below_4_5": 0,
+      "below_3": 0
+     },
+     "L_panel": {
+      "min": 11.61,
+      "p5": 11.62,
+      "median": 18.11,
+      "p95": 25.38,
+      "max": 26.02
+     },
+     "L_overview": {
+      "min": 15.62,
+      "p5": 15.99,
+      "median": 18.56,
+      "p95": 24.17,
+      "max": 25.73
+     },
+     "chroma": {
+      "min": 3.35,
+      "p5": 3.59,
+      "median": 18.33,
+      "p95": 32.12,
+      "max": 32.39
+     }
+    }
+   }
+  },
+  "light": {
+   "all": {
+    "panel_text": {
+     "min": 5.52,
+     "p5": 5.54,
+     "median": 6.77,
+     "p95": 10.35,
+     "max": 11.53,
+     "below_4_5": 0,
+     "below_3": 0
+    },
+    "grid_text": {
+     "min": 5.52,
+     "p5": 5.52,
+     "median": 6.5,
+     "p95": 9.25,
+     "max": 10.51,
+     "below_4_5": 0,
+     "below_3": 0
+    },
+    "dock_text": {
+     "min": 7.99,
+     "p5": 8.06,
+     "median": 8.67,
+     "p95": 10.53,
+     "max": 10.74,
+     "below_4_5": 0,
+     "below_3": 0
+    },
+    "card_text": {
+     "min": 8.22,
+     "p5": 8.34,
+     "median": 8.83,
+     "p95": 9.95,
+     "max": 10.32,
+     "below_4_5": 0,
+     "below_3": 0
+    },
+    "dock_sep": {
+     "min": 3.85,
+     "p5": 3.94,
+     "median": 12.69,
+     "p95": 26.0,
+     "max": 34.51
+    },
+    "card_sep": {
+     "min": 11.82,
+     "p5": 15.34,
+     "median": 25.0,
+     "p95": 37.12,
+     "max": 43.36
+    },
+    "L_panel": {
+     "min": 63.34,
+     "p5": 64.67,
+     "median": 73.03,
+     "p95": 86.58,
+     "max": 89.37
+    },
+    "L_overview": {
+     "min": 63.3,
+     "p5": 66.58,
+     "median": 73.62,
+     "p95": 84.56,
+     "max": 89.06
+    },
+    "see_through": {
+     "min": 0.0,
+     "p5": 0.16,
+     "median": 0.28,
+     "p95": 0.38,
+     "max": 0.5
+    },
+    "chroma": {
+     "min": 5.18,
+     "p5": 6.43,
+     "median": 26.36,
+     "p95": 50.64,
+     "max": 55.79
+    },
+    "chroma_p99": {
+     "min": 5.71,
+     "p5": 13.47,
+     "median": 43.9,
+     "p95": 72.2,
+     "max": 79.68
+    },
+    "accent_de": {
+     "min": 0.0,
+     "p5": 0.0,
+     "median": 0.0,
+     "p95": 0.0,
+     "max": 0.0
+    }
+   },
+   "by_lightness": {
+    "dark": {
+     "panel_text": {
+      "min": 5.52,
+      "p5": 5.52,
+      "median": 6.12,
+      "p95": 6.65,
+      "max": 6.97,
+      "below_4_5": 0,
+      "below_3": 0
+     },
+     "grid_text": {
+      "min": 5.52,
+      "p5": 5.52,
+      "median": 5.92,
+      "p95": 6.35,
+      "max": 6.43,
+      "below_4_5": 0,
+      "below_3": 0
+     },
+     "dock_text": {
+      "min": 8.04,
+      "p5": 8.04,
+      "median": 8.41,
+      "p95": 8.66,
+      "max": 8.67,
+      "below_4_5": 0,
+      "below_3": 0
+     },
+     "card_text": {
+      "min": 8.34,
+      "p5": 8.34,
+      "median": 8.55,
+      "p95": 8.83,
+      "max": 8.84,
+      "below_4_5": 0,
+      "below_3": 0
+     },
+     "L_panel": {
+      "min": 63.34,
+      "p5": 63.7,
+      "median": 68.06,
+      "p95": 71.08,
+      "max": 71.44
+     },
+     "L_overview": {
+      "min": 63.3,
+      "p5": 64.44,
+      "median": 67.67,
+      "p95": 70.03,
+      "max": 70.24
+     },
+     "chroma": {
+      "min": 5.83,
+      "p5": 6.3,
+      "median": 13.97,
+      "p95": 40.78,
+      "max": 41.0
+     }
+    },
+    "medium": {
+     "panel_text": {
+      "min": 5.52,
+      "p5": 5.62,
+      "median": 6.77,
+      "p95": 8.28,
+      "max": 8.49,
+      "below_4_5": 0,
+      "below_3": 0
+     },
+     "grid_text": {
+      "min": 5.52,
+      "p5": 5.67,
+      "median": 6.57,
+      "p95": 7.99,
+      "max": 8.49,
+      "below_4_5": 0,
+      "below_3": 0
+     },
+     "dock_text": {
+      "min": 7.99,
+      "p5": 8.11,
+      "median": 8.68,
+      "p95": 9.52,
+      "max": 10.56,
+      "below_4_5": 0,
+      "below_3": 0
+     },
+     "card_text": {
+      "min": 8.22,
+      "p5": 8.31,
+      "median": 8.76,
+      "p95": 9.36,
+      "max": 9.59,
+      "below_4_5": 0,
+      "below_3": 0
+     },
+     "L_panel": {
+      "min": 65.58,
+      "p5": 68.74,
+      "median": 73.03,
+      "p95": 77.28,
+      "max": 77.53
+     },
+     "L_overview": {
+      "min": 69.11,
+      "p5": 70.52,
+      "median": 73.62,
+      "p95": 76.31,
+      "max": 76.83
+     },
+     "chroma": {
+      "min": 7.83,
+      "p5": 13.75,
+      "median": 35.85,
+      "p95": 49.34,
+      "max": 53.88
+     }
+    },
+    "light": {
+     "panel_text": {
+      "min": 5.88,
+      "p5": 6.53,
+      "median": 8.83,
+      "p95": 11.08,
+      "max": 11.53,
+      "below_4_5": 0,
+      "below_3": 0
+     },
+     "grid_text": {
+      "min": 5.91,
+      "p5": 6.37,
+      "median": 8.22,
+      "p95": 10.04,
+      "max": 10.51,
+      "below_4_5": 0,
+      "below_3": 0
+     },
+     "dock_text": {
+      "min": 8.49,
+      "p5": 8.54,
+      "median": 9.64,
+      "p95": 10.59,
+      "max": 10.74,
+      "below_4_5": 0,
+      "below_3": 0
+     },
+     "card_text": {
+      "min": 8.86,
+      "p5": 8.89,
+      "median": 9.57,
+      "p95": 10.23,
+      "max": 10.32,
+      "below_4_5": 0,
+      "below_3": 0
+     },
+     "L_panel": {
+      "min": 72.13,
+      "p5": 73.22,
+      "median": 81.27,
+      "p95": 88.73,
+      "max": 89.37
+     },
+     "L_overview": {
+      "min": 73.06,
+      "p5": 74.66,
+      "median": 81.16,
+      "p95": 87.57,
+      "max": 89.06
+     },
+     "chroma": {
+      "min": 5.18,
+      "p5": 5.83,
+      "median": 25.7,
+      "p95": 54.58,
+      "max": 55.79
+     }
+    }
+   }
+  }
+ },
+ "accents": {
+  "blue": {
+   "dark": 7.9,
+   "light": 5.7
+  },
+  "teal": {
+   "dark": 7.9,
+   "light": 5.7
+  },
+  "green": {
+   "dark": 7.89,
+   "light": 5.7
+  },
+  "yellow": {
+   "dark": 7.75,
+   "light": 5.8
+  },
+  "orange": {
+   "dark": 7.94,
+   "light": 5.66
+  },
+  "red": {
+   "dark": 8.2,
+   "light": 5.5
+  },
+  "pink": {
+   "dark": 7.86,
+   "light": 5.72
+  },
+  "purple": {
+   "dark": 8.18,
+   "light": 5.52
+  },
+  "slate": {
+   "dark": 7.85,
+   "light": 5.73
+  }
+ }
+}

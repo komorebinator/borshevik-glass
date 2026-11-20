@@ -9,25 +9,25 @@
     <key name="accent-tint" type="b">
       <default>true</default>
       <summary>Accent tint</summary>
-      <description>Whether GNOME's accent colour is mixed into the glass's tint.</description>
+      <description>Whether GNOME's accent colour is mixed into the glass and the surfaces on it.</description>
     </key>
-    <key name="accent-amount" type="i">
-      <range min="5" max="30"/>
-      <default>10</default>
+    <key name="accent-scale" type="i">
+      <range min="50" max="150"/>
+      <default>100</default>
       <summary>Accent amount</summary>
-      <description>How much of the accent colour is mixed into the tint, in per cent.</description>
+      <description>The accent's strength, in per cent of the designed look: at 100, 8 % of the accent over the glass, 25 % in the surfaces on it, 6 % in an open folder's card in the light case; in the dark one 12.5 and 9 %, and over the glass 3.2 % for purple and less for a lighter accent; all scale together.</description>
     </key>
-    <key name="dark-depth" type="i">
-      <range min="0" max="100"/>
-      <default>80</default>
+    <key name="dark-depth-scale" type="i">
+      <range min="50" max="150"/>
+      <default>100</default>
       <summary>Dark depth</summary>
-      <description>The opacity of the dark tint over the blurred wallpaper, in per cent.</description>
+      <description>How far the dark glass is taken from mid-grey toward black, in per cent of the designed look: its lightness, which follows the wallpaper, 12 higher at 50 and 12 lower at 150.</description>
     </key>
-    <key name="light-depth" type="i">
-      <range min="0" max="100"/>
-      <default>45</default>
+    <key name="light-depth-scale" type="i">
+      <range min="50" max="150"/>
+      <default>100</default>
       <summary>Light depth</summary>
-      <description>The opacity of the light tint over the blurred wallpaper, in per cent.</description>
+      <description>How far the light glass is taken from mid-grey toward white, in per cent of the designed look: its lightness 75 at 50, 80 at 100, 85 at 150.</description>
     </key>
   </schema>
 </schemalist>

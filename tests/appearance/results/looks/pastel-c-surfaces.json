@@ -1,0 +1,72 @@
+{
+ "name": "pastel-c-surfaces",
+ "case": "light",
+ "date": "2026-11-18",
+ "source": {
+  "round": "r9",
+  "variant": "10",
+  "label": "10 — то же, открытая папка: акцент 0.05"
+ },
+ "note": "The pastel glass (D: lightness lifted, hue kept) under C's surfaces: dock, folder tiles and open folder tinted like the panel, the open folder's card at 5 % of the accent.",
+ "look": {
+  "base": [
+   250,
+   250,
+   251
+  ],
+  "depth": 0.55,
+  "accent": 0.25,
+  "text": [
+   34,
+   34,
+   38
+  ],
+  "surface": [
+   255,
+   255,
+   255,
+   0.5
+  ],
+  "card": [
+   250,
+   250,
+   251,
+   0.6
+  ],
+  "card_share": 0.5,
+  "veil": [
+   0,
+   3,
+   4,
+   0.2
+  ],
+  "sat": 3.0,
+  "panel_depth": 0.8,
+  "panel_sat": 3.0,
+  "surfaces_like_panel": true,
+  "dash_border": [
+   34,
+   34,
+   38,
+   30
+  ],
+  "tile_border": [
+   34,
+   34,
+   38,
+   30
+  ],
+  "lift": [
+   80,
+   0.3,
+   1.0
+  ],
+  "panel_lift": [
+   90,
+   0.12,
+   0.8
+  ],
+  "lift_accent": 0.08,
+  "card_accent": 0.05
+ }
+}

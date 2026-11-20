@@ -6,7 +6,7 @@ import Gtk from 'gi://Gtk';
 
 import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
-// A row with a slider bound to an integer setting, in per cent.
+// A row with a slider bound to an integer setting, in per cent of the designed look.
 function sliderRow(settings, key, title, min, max) {
     const adjustment = new Gtk.Adjustment({lower: min, upper: max, step_increment: 1, page_increment: 5});
     settings.bind(key, adjustment, 'value', Gio.SettingsBindFlags.DEFAULT);
@@ -16,6 +16,8 @@ function sliderRow(settings, key, title, min, max) {
         valign: Gtk.Align.CENTER,
         width_request: 240,
     });
+    // 100 %: the look the extension was designed with
+    scale.add_mark(100, Gtk.PositionType.BOTTOM, null);
     // a label of its own, of one width for every row, so the sliders line up
     const value = new Gtk.Label({width_chars: 5, xalign: 1, css_classes: ['dim-label', 'numeric']});
     const showValue = () => (value.label = `${Math.round(adjustment.value)} %`);
@@ -42,18 +44,18 @@ export default class BorshevikGlassPreferences extends ExtensionPreferences {
         group.add(lightStyle);
         page.add(group);
 
-        const tint = new Adw.PreferencesGroup({title: _('Tint')});
+        const tint = new Adw.PreferencesGroup({title: _('Glass')});
         const accentTint = new Adw.SwitchRow({
             title: _('Accent tint'),
             subtitle: _('Mix the accent colour into the glass'),
         });
         settings.bind('accent-tint', accentTint, 'active', Gio.SettingsBindFlags.DEFAULT);
         tint.add(accentTint);
-        const accentAmount = sliderRow(settings, 'accent-amount', _('Accent amount'), 5, 30);
+        const accentAmount = sliderRow(settings, 'accent-scale', _('Accent amount'), 50, 150);
         settings.bind('accent-tint', accentAmount, 'visible', Gio.SettingsBindFlags.GET);
         tint.add(accentAmount);
-        tint.add(sliderRow(settings, 'dark-depth', _('Dark depth'), 0, 100));
-        tint.add(sliderRow(settings, 'light-depth', _('Light depth'), 0, 100));
+        tint.add(sliderRow(settings, 'dark-depth-scale', _('Dark depth'), 50, 150));
+        tint.add(sliderRow(settings, 'light-depth-scale', _('Light depth'), 50, 150));
         page.add(tint);
 
         window.add(page);

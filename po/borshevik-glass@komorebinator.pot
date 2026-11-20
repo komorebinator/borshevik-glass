@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: borshevik-glass\n"
 "Report-Msgid-Bugs-To: https://github.com/komorebinator/borshevik-glass/"
 "issues\n"
-"POT-Creation-Date: 2026-11-03 20:52+0400\n"
+"POT-Creation-Date: 2026-11-19 02:20+0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,40 +18,40 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: borshevik-glass@komorebinator/prefs.js:34
+#: borshevik-glass@komorebinator/prefs.js:38
 msgid "Appearance"
 msgstr ""
 
-#: borshevik-glass@komorebinator/prefs.js:36
+#: borshevik-glass@komorebinator/prefs.js:40
 msgid "Light style"
 msgstr ""
 
-#: borshevik-glass@komorebinator/prefs.js:37
+#: borshevik-glass@komorebinator/prefs.js:41
 msgid ""
 "When dark style is off, the panel, the overview and GNOME’s menus turn "
 "light. Off: always dark."
 msgstr ""
 
-#: borshevik-glass@komorebinator/prefs.js:43
-msgid "Tint"
+#: borshevik-glass@komorebinator/prefs.js:47
+msgid "Glass"
 msgstr ""
 
-#: borshevik-glass@komorebinator/prefs.js:45
+#: borshevik-glass@komorebinator/prefs.js:49
 msgid "Accent tint"
 msgstr ""
 
-#: borshevik-glass@komorebinator/prefs.js:46
+#: borshevik-glass@komorebinator/prefs.js:50
 msgid "Mix the accent colour into the glass"
 msgstr ""
 
-#: borshevik-glass@komorebinator/prefs.js:50
+#: borshevik-glass@komorebinator/prefs.js:54
 msgid "Accent amount"
 msgstr ""
 
-#: borshevik-glass@komorebinator/prefs.js:53
+#: borshevik-glass@komorebinator/prefs.js:57
 msgid "Dark depth"
 msgstr ""
 
-#: borshevik-glass@komorebinator/prefs.js:54
+#: borshevik-glass@komorebinator/prefs.js:58
 msgid "Light depth"
 msgstr ""

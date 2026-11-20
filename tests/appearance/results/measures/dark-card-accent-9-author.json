@@ -1,0 +1,368 @@
+{
+ "look": "dark-card-accent-9",
+ "kept_as": "dark-card-accent-9",
+ "params": {
+  "dark": {
+   "base": [
+    0,
+    3,
+    4
+   ],
+   "depth": 0.8,
+   "accent": 0.1,
+   "text": [
+    250,
+    250,
+    251
+   ],
+   "surface": [
+    100,
+    100,
+    100,
+    0.35
+   ],
+   "surface_accent": 0.125,
+   "card": [
+    20,
+    22,
+    26,
+    0.85
+   ],
+   "card_share": 0.35,
+   "card_accent": 0.09,
+   "veil": [
+    0,
+    3,
+    4,
+    0.3
+   ],
+   "lift": [
+    12,
+    0.3,
+    0.5
+   ],
+   "lift_accent": 0.04,
+   "fold_blur": "card"
+  }
+ },
+ "collection": "author",
+ "accent": "purple",
+ "date": "2026-11-20",
+ "screen": "1728x1080",
+ "composition": {
+  "wallpapers": 210,
+  "dark": 67,
+  "medium": 106,
+  "light": 37,
+  "muted": 76,
+  "moderate": 102,
+  "colourful": 32,
+  "busy": 60
+ },
+ "cases": {
+  "dark": {
+   "all": {
+    "panel_text": {
+     "min": 9.81,
+     "p5": 9.97,
+     "median": 13.53,
+     "p95": 19.56,
+     "max": 19.7,
+     "below_4_5": 0,
+     "below_3": 0
+    },
+    "grid_text": {
+     "min": 9.81,
+     "p5": 9.9,
+     "median": 11.33,
+     "p95": 15.33,
+     "max": 18.58,
+     "below_4_5": 0,
+     "below_3": 0
+    },
+    "dock_text": {
+     "min": 8.14,
+     "p5": 8.43,
+     "median": 10.89,
+     "p95": 14.32,
+     "max": 14.65,
+     "below_4_5": 0,
+     "below_3": 0
+    },
+    "card_text": {
+     "min": 15.82,
+     "p5": 15.85,
+     "median": 16.07,
+     "p95": 16.51,
+     "max": 16.91,
+     "below_4_5": 0,
+     "below_3": 0
+    },
+    "dock_sep": {
+     "min": 5.64,
+     "p5": 8.01,
+     "median": 13.82,
+     "p95": 14.33,
+     "max": 14.91
+    },
+    "card_sep": {
+     "min": 5.82,
+     "p5": 7.39,
+     "median": 9.26,
+     "p95": 12.23,
+     "max": 15.94
+    },
+    "L_panel": {
+     "min": 0.98,
+     "p5": 1.09,
+     "median": 8.72,
+     "p95": 21.84,
+     "max": 27.47
+    },
+    "L_overview": {
+     "min": 1.38,
+     "p5": 3.22,
+     "median": 9.34,
+     "p95": 19.21,
+     "max": 24.09
+    },
+    "see_through": {
+     "min": 0.11,
+     "p5": 0.26,
+     "median": 0.29,
+     "p95": 0.3,
+     "max": 0.31
+    },
+    "chroma": {
+     "min": 1.53,
+     "p5": 3.59,
+     "median": 8.54,
+     "p95": 17.2,
+     "max": 25.6
+    },
+    "chroma_p99": {
+     "min": 3.58,
+     "p5": 9.75,
+     "median": 20.75,
+     "p95": 35.62,
+     "max": 45.06
+    },
+    "accent_de": {
+     "min": 0.0,
+     "p5": 0.0,
+     "median": 0.0,
+     "p95": 0.0,
+     "max": 0.0
+    }
+   },
+   "by_lightness": {
+    "dark": {
+     "panel_text": {
+      "min": 10.36,
+      "p5": 11.68,
+      "median": 17.41,
+      "p95": 19.66,
+      "max": 19.7,
+      "below_4_5": 0,
+      "below_3": 0
+     },
+     "grid_text": {
+      "min": 10.01,
+      "p5": 10.77,
+      "median": 13.54,
+      "p95": 16.27,
+      "max": 18.58,
+      "below_4_5": 0,
+      "below_3": 0
+     },
+     "dock_text": {
+      "min": 8.28,
+      "p5": 8.75,
+      "median": 12.14,
+      "p95": 14.58,
+      "max": 14.65,
+      "below_4_5": 0,
+      "below_3": 0
+     },
+     "card_text": {
+      "min": 15.85,
+      "p5": 16.02,
+      "median": 16.25,
+      "p95": 16.59,
+      "max": 16.91,
+      "below_4_5": 0,
+      "below_3": 0
+     },
+     "L_panel": {
+      "min": 0.98,
+      "p5": 1.02,
+      "median": 2.66,
+      "p95": 9.27,
+      "max": 11.0
+     },
+     "L_overview": {
+      "min": 1.38,
+      "p5": 2.49,
+      "median": 4.79,
+      "p95": 7.21,
+      "max": 7.43
+     },
+     "chroma": {
+      "min": 2.74,
+      "p5": 3.61,
+      "median": 7.08,
+      "p95": 16.44,
+      "max": 23.67
+     }
+    },
+    "medium": {
+     "panel_text": {
+      "min": 9.81,
+      "p5": 9.96,
+      "median": 12.8,
+      "p95": 18.92,
+      "max": 19.7,
+      "below_4_5": 0,
+      "below_3": 0
+     },
+     "grid_text": {
+      "min": 9.81,
+      "p5": 9.95,
+      "median": 11.11,
+      "p95": 13.2,
+      "max": 14.94,
+      "below_4_5": 0,
+      "below_3": 0
+     },
+     "dock_text": {
+      "min": 8.23,
+      "p5": 8.63,
+      "median": 10.83,
+      "p95": 13.28,
+      "max": 14.58,
+      "below_4_5": 0,
+      "below_3": 0
+     },
+     "card_text": {
+      "min": 15.82,
+      "p5": 15.85,
+      "median": 16.04,
+      "p95": 16.32,
+      "max": 16.46,
+      "below_4_5": 0,
+      "below_3": 0
+     },
+     "L_panel": {
+      "min": 0.98,
+      "p5": 1.62,
+      "median": 9.9,
+      "p95": 19.13,
+      "max": 20.82
+     },
+     "L_overview": {
+      "min": 7.11,
+      "p5": 7.57,
+      "median": 10.31,
+      "p95": 13.68,
+      "max": 14.41
+     },
+     "chroma": {
+      "min": 2.92,
+      "p5": 4.19,
+      "median": 9.48,
+      "p95": 17.67,
+      "max": 25.6
+     }
+    },
+    "light": {
+     "panel_text": {
+      "min": 9.81,
+      "p5": 9.81,
+      "median": 11.25,
+      "p95": 14.2,
+      "max": 16.47,
+      "below_4_5": 0,
+      "below_3": 0
+     },
+     "grid_text": {
+      "min": 9.81,
+      "p5": 9.81,
+      "median": 10.29,
+      "p95": 11.06,
+      "max": 11.35,
+      "below_4_5": 0,
+      "below_3": 0
+     },
+     "dock_text": {
+      "min": 8.14,
+      "p5": 8.15,
+      "median": 9.32,
+      "p95": 11.08,
+      "max": 11.69,
+      "below_4_5": 0,
+      "below_3": 0
+     },
+     "card_text": {
+      "min": 15.82,
+      "p5": 15.83,
+      "median": 15.92,
+      "p95": 16.11,
+      "max": 16.17,
+      "below_4_5": 0,
+      "below_3": 0
+     },
+     "L_panel": {
+      "min": 5.88,
+      "p5": 10.59,
+      "median": 17.85,
+      "p95": 26.87,
+      "max": 27.47
+     },
+     "L_overview": {
+      "min": 14.44,
+      "p5": 14.63,
+      "median": 16.65,
+      "p95": 21.92,
+      "max": 24.09
+     },
+     "chroma": {
+      "min": 1.53,
+      "p5": 2.97,
+      "median": 8.12,
+      "p95": 17.17,
+      "max": 22.32
+     }
+    }
+   }
+  }
+ },
+ "accents": {
+  "blue": {
+   "dark": 7.85
+  },
+  "teal": {
+   "dark": 7.85
+  },
+  "green": {
+   "dark": 7.84
+  },
+  "yellow": {
+   "dark": 7.7
+  },
+  "orange": {
+   "dark": 7.9
+  },
+  "red": {
+   "dark": 8.15
+  },
+  "pink": {
+   "dark": 7.82
+  },
+  "purple": {
+   "dark": 8.14
+  },
+  "slate": {
+   "dark": 7.81
+  }
+ }
+}

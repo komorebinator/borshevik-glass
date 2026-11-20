@@ -1,0 +1,185 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+
+/* Every rule that mixes in GNOME's accent colour, as a template: the extension
+   fills in the shares and loads the result after stylesheet.css, again
+   whenever an accent setting changes. Each case has its own: {{dark-glass}} and
+   {{light-glass}} are what is left clear of the accent widget over the glass
+   (1 − its share), {{…-surface}} and {{…-card}} the per cent of the accent in
+   the surfaces and in an open folder's card — 8, 25 and 6 % in the light case,
+   4, 12.5 and 9 % in the dark one, times the accent strength, or none with the
+   accent switched off.
+   st-mix(a, b, N%) is N % of a; st-transparentize(c, x) takes x off c's alpha.
+   A rule here that must win over one of stylesheet.css is made more specific
+   than it: of two equally specific rules St applied stylesheet.css's, so the
+   dash's rules name .dash-item-container to outweigh its transparent backdrop.
+   GNOME resolves -st-accent-color itself, a new accent colour included. */
+
+/* ---- Dark ---- */
+
+/* The accent over the glass. */
+.borshevik-glass-accent {
+  background-color: st-transparentize(-st-accent-color, {{dark-glass}});
+}
+
+/* Surfaces on the glass: translucent instead of GNOME's opaque grey. */
+#dash .dash-background,
+.search-entry,
+.search-section-content,
+.workspace-thumbnails .workspace-thumbnail,
+.overview-tile.app-folder,
+.page-navigation-arrow,
+.app-folder-dialog .page-navigation-arrow,
+.app-folder-dialog .icon-button,
+.app-folder-dialog .folder-name-container .folder-name-entry {
+  background-color: st-transparentize(st-mix(-st-accent-color, rgb(100, 100, 100), {{dark-surface}}%), 0.65) !important;
+}
+
+.overview-tile:hover,
+.overview-tile:focus,
+.overview-tile:selected,
+.overview-tile:highlighted,
+.grid-search-result:hover,
+.grid-search-result:focus,
+.grid-search-result:selected,
+.grid-search-result:highlighted,
+.list-search-result:hover,
+.list-search-result:focus,
+.list-search-result:selected,
+.list-search-result:highlighted,
+.search-provider-icon:hover,
+.search-provider-icon:focus,
+.overview-tile.app-folder:hover,
+.overview-tile.app-folder:focus,
+.page-navigation-arrow:hover,
+.page-navigation-arrow:focus,
+.app-folder-dialog .icon-button:hover,
+.app-folder-dialog .icon-button:focus,
+#dash .dash-item-container .overview-tile:hover .overview-icon,
+#dash .dash-item-container .overview-tile:focus .overview-icon,
+#dash .dash-item-container .show-apps:hover .overview-icon,
+#dash .dash-item-container .show-apps:focus .overview-icon {
+  background-color: st-transparentize(st-mix(-st-accent-color, rgb(120, 120, 120), {{dark-surface}}%), 0.65) !important;
+}
+
+.overview-tile:active,
+.overview-tile:drop,
+.overview-tile:focus:hover,
+.overview-tile:selected:hover,
+.overview-tile:highlighted:hover,
+.grid-search-result:active,
+.grid-search-result:focus:hover,
+.list-search-result:active,
+.list-search-result:focus:hover,
+.search-provider-icon:active,
+.search-provider-icon:focus:hover,
+.page-navigation-arrow:active,
+.page-navigation-arrow:focus:hover,
+.app-folder-dialog .icon-button:active,
+.app-folder-dialog .icon-button:focus:hover,
+#dash .dash-item-container .overview-tile:active .overview-icon,
+#dash .dash-item-container .overview-tile:focus:hover .overview-icon,
+#dash .dash-item-container .overview-tile:drop .overview-icon,
+#dash .dash-item-container .show-apps:checked .overview-icon {
+  background-color: st-transparentize(st-mix(-st-accent-color, rgb(120, 120, 120), {{dark-surface}}%), 0.6) !important;
+}
+
+.overview-tile:focus:active,
+.grid-search-result:focus:active,
+.list-search-result:focus:active,
+.search-provider-icon:focus:active,
+.page-navigation-arrow:focus:active,
+.app-folder-dialog .icon-button:focus:active,
+#dash .dash-item-container .show-apps:checked .overview-icon:hover {
+  background-color: st-transparentize(st-mix(-st-accent-color, rgb(120, 120, 120), {{dark-surface}}%), 0.55) !important;
+}
+
+/* An open folder over the blurred overview: darker and denser than the glass,
+   so it reads as a card of its own. */
+.app-folder-dialog {
+  background-color: st-transparentize(st-mix(-st-accent-color, rgb(20, 22, 26), {{dark-card}}%), 0.15);
+}
+
+/* ---- Light ---- */
+
+.borshevik-glass-light .borshevik-glass-accent {
+  background-color: st-transparentize(-st-accent-color, {{light-glass}});
+}
+
+/* Surfaces on the glass: the panel's near-white, translucent, instead of
+   GNOME's opaque grey. */
+.borshevik-glass-light #dash .dash-background,
+.borshevik-glass-light .search-entry,
+.borshevik-glass-light .search-section-content,
+.borshevik-glass-light .workspace-thumbnails .workspace-thumbnail,
+.borshevik-glass-light .overview-tile.app-folder,
+.borshevik-glass-light .page-navigation-arrow,
+.borshevik-glass-light .app-folder-dialog .page-navigation-arrow,
+.borshevik-glass-light .app-folder-dialog .icon-button,
+.borshevik-glass-light .app-folder-dialog .folder-name-container .folder-name-entry {
+  background-color: st-transparentize(st-mix(-st-accent-color, rgb(250, 250, 251), {{light-surface}}%), 0.444) !important;
+}
+
+.borshevik-glass-light .overview-tile:hover,
+.borshevik-glass-light .overview-tile:focus,
+.borshevik-glass-light .overview-tile:selected,
+.borshevik-glass-light .overview-tile:highlighted,
+.borshevik-glass-light .grid-search-result:hover,
+.borshevik-glass-light .grid-search-result:focus,
+.borshevik-glass-light .grid-search-result:selected,
+.borshevik-glass-light .grid-search-result:highlighted,
+.borshevik-glass-light .list-search-result:hover,
+.borshevik-glass-light .list-search-result:focus,
+.borshevik-glass-light .list-search-result:selected,
+.borshevik-glass-light .list-search-result:highlighted,
+.borshevik-glass-light .search-provider-icon:hover,
+.borshevik-glass-light .search-provider-icon:focus,
+.borshevik-glass-light .overview-tile.app-folder:hover,
+.borshevik-glass-light .overview-tile.app-folder:focus,
+.borshevik-glass-light .page-navigation-arrow:hover,
+.borshevik-glass-light .page-navigation-arrow:focus,
+.borshevik-glass-light .app-folder-dialog .icon-button:hover,
+.borshevik-glass-light .app-folder-dialog .icon-button:focus,
+.borshevik-glass-light #dash .dash-item-container .overview-tile:hover .overview-icon,
+.borshevik-glass-light #dash .dash-item-container .overview-tile:focus .overview-icon,
+.borshevik-glass-light #dash .dash-item-container .show-apps:hover .overview-icon,
+.borshevik-glass-light #dash .dash-item-container .show-apps:focus .overview-icon {
+  background-color: st-transparentize(st-mix(-st-accent-color, rgb(250, 250, 251), {{light-surface}}%), 0.3) !important;
+}
+
+.borshevik-glass-light .overview-tile:active,
+.borshevik-glass-light .overview-tile:drop,
+.borshevik-glass-light .overview-tile:focus:hover,
+.borshevik-glass-light .overview-tile:selected:hover,
+.borshevik-glass-light .overview-tile:highlighted:hover,
+.borshevik-glass-light .grid-search-result:active,
+.borshevik-glass-light .grid-search-result:focus:hover,
+.borshevik-glass-light .list-search-result:active,
+.borshevik-glass-light .list-search-result:focus:hover,
+.borshevik-glass-light .search-provider-icon:active,
+.borshevik-glass-light .search-provider-icon:focus:hover,
+.borshevik-glass-light .page-navigation-arrow:active,
+.borshevik-glass-light .page-navigation-arrow:focus:hover,
+.borshevik-glass-light .app-folder-dialog .icon-button:active,
+.borshevik-glass-light .app-folder-dialog .icon-button:focus:hover,
+.borshevik-glass-light #dash .dash-item-container .overview-tile:active .overview-icon,
+.borshevik-glass-light #dash .dash-item-container .overview-tile:focus:hover .overview-icon,
+.borshevik-glass-light #dash .dash-item-container .overview-tile:drop .overview-icon,
+.borshevik-glass-light #dash .dash-item-container .show-apps:checked .overview-icon {
+  background-color: st-transparentize(st-mix(-st-accent-color, rgb(250, 250, 251), {{light-surface}}%), 0.2) !important;
+}
+
+.borshevik-glass-light .overview-tile:focus:active,
+.borshevik-glass-light .grid-search-result:focus:active,
+.borshevik-glass-light .list-search-result:focus:active,
+.borshevik-glass-light .search-provider-icon:focus:active,
+.borshevik-glass-light .page-navigation-arrow:focus:active,
+.borshevik-glass-light .app-folder-dialog .icon-button:focus:active,
+.borshevik-glass-light #dash .dash-item-container .show-apps:checked .overview-icon:hover {
+  background-color: st-transparentize(st-mix(-st-accent-color, rgb(250, 250, 251), {{light-surface}}%), 0.15) !important;
+}
+
+/* An open folder over the blurred overview: the dock's near-white, glassy, the
+   blur behind keeping the grid from competing with the folder's own icons. */
+.borshevik-glass-light .app-folder-dialog {
+  background-color: st-transparentize(st-mix(-st-accent-color, rgb(250, 250, 251), {{light-card}}%), 0.444);
+}

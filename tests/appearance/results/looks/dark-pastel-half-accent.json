@@ -1,0 +1,51 @@
+{
+ "name": "dark-pastel-half-accent",
+ "case": "dark",
+ "date": "2026-11-19",
+ "source": {
+  "look": "dark-pastel",
+  "change": "the accent shares halved: 4 / 12.5 / 3 %"
+ },
+ "note": "dark-pastel with half the accent: on the author own screen the full shares were too colourful, the accent slider at 50 % right.",
+ "look": {
+  "base": [
+   0,
+   3,
+   4
+  ],
+  "depth": 0.8,
+  "accent": 0.1,
+  "text": [
+   250,
+   250,
+   251
+  ],
+  "surface": [
+   100,
+   100,
+   100,
+   0.35
+  ],
+  "card": [
+   20,
+   22,
+   26,
+   0.85
+  ],
+  "card_share": 0.35,
+  "veil": [
+   0,
+   3,
+   4,
+   0.3
+  ],
+  "lift": [
+   12,
+   0.3,
+   0.5
+  ],
+  "lift_accent": 0.04,
+  "surface_accent": 0.125,
+  "card_accent": 0.03
+ }
+}
