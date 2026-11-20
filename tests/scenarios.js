@@ -24,6 +24,23 @@ function openFolder(h) {
     h.sleep(1.5);
 }
 
+// What the theme gives a widget of these style classes and pseudo classes, in the
+// current case, as [r, g, b, alpha].
+const themeColour = (h, classes, pseudo = '') => JSON.parse(h.eval(`(() => {
+    const w = new (imports.gi.St.Widget)({style_class: '${classes}', pseudo_class: '${pseudo}'});
+    Main.layoutManager.uiGroup.add_child(w);
+    const c = w.get_theme_node().get_background_color();
+    w.destroy();
+    return JSON.stringify([c.red, c.green, c.blue, c.alpha / 255]);
+})()`));
+
+// A Quick Settings toggle switched on keeps GNOME's accent.
+function expectAccentToggle(h, accent) {
+    const on = themeColour(h, 'button quick-toggle', 'checked');
+    if (Math.max(...accent.map((v, c) => Math.abs(v - on[c]))) > 2)
+        h.fail(`a checked quick toggle is ${on}, not the accent ${accent}`);
+}
+
 const folderBox = h => h.actorBox(`global.stage.get_children().flatMap(function walk(a) {
     return [a, ...a.get_children().flatMap(walk)];
 }).find(a => a.has_style_class_name?.('app-folder-dialog') && a.is_mapped())`);
@@ -32,10 +49,15 @@ export const scenarios = [
     {
         path: 'frosted-surfaces#panel-on-desktop',
         run(h) {
-            h.expectTintCase('dark');
+            h.expectCase('dark');
             const panel = h.panelStrip();
-            h.expectColour('panel strip', h.shot().region(panel), h.glass('A'));
+            h.expectColour('panel strip', h.shot().region(panel), h.panelGlass('A', 'dark'));
             h.expectBlurred('panel strip', h.lastShot.region(panel));
+            // the glass reaches the screen's top edge: no margin of the baked texture shows
+            // there, which would be GNOME's own colour, far off; the blur's edge, which takes the
+            // wallpaper's last stripe for what lies beyond, strays a little from the flat field
+            h.expectColour('panel at the screen\'s top edge', h.lastShot.region({...panel, y: 0, height: 1}),
+                h.panelGlass('A', 'dark'), 12);
         },
     },
     {
@@ -43,11 +65,18 @@ export const scenarios = [
         run(h) {
             h.key('super');
             h.waitFor(OVERVIEW_JS);
-            h.expectColour('window picker background', h.shot().region(h.cornerBottomLeft()), h.glass('A'));
+            h.expectColour('window picker background', h.shot().region(h.cornerBottomLeft()), h.glass('A', 'dark'));
             h.expectBlurred('window picker background', h.lastShot.region(h.cornerBottomLeft()));
+            // the glass reaches the screen's edges (see panel-on-desktop on the tolerance)
+            const corner = h.cornerBottomLeft();
+            h.expectColour('window picker at the screen\'s left edge', h.lastShot.region({...corner, x: 0, width: 1}),
+                h.glass('A', 'dark'), 12);
+            const width = Number(h.eval('global.stage.width'));
+            h.expectColour('window picker at the screen\'s right edge', h.lastShot.region({...corner, x: width - 1, width: 1}),
+                h.glass('A', 'dark'), 12);
             h.eval('Main.overview.dash.showAppsButton.checked = true');
             h.sleep(1.5);
-            h.expectColour('app grid background', h.shot().region(h.cornerBottomLeft()), h.glass('A'));
+            h.expectColour('app grid background', h.shot().region(h.cornerBottomLeft()), h.glass('A', 'dark'));
         },
     },
     {
@@ -106,7 +135,32 @@ export const scenarios = [
             // inside its left padding, at mid-height: background, no icon
             const spot = {x: dash.x + 4, y: dash.y + Math.floor(dash.height / 2) - 2, width: 4, height: 4};
             h.expectColour('dash background', h.shot().region(spot),
-                h.over(h.glass('A'), [100, 100, 100, 0.35]));
+                h.over(h.glass('A', 'dark'), h.surface('dark', '#dash .dash-background')));
+        },
+    },
+    {
+        path: 'dock-and-overview-components#dash-hover',
+        run(h) {
+            for (const scheme of ['dark', 'light']) {
+                h.scheme(scheme);
+                h.key('super');
+                h.waitFor(OVERVIEW_JS);
+                h.eval('Main.overview.dash.showAppsButton.checked = true; "ok"');
+                h.sleep(1);
+                // the highlight is what accent.css writes for it, not left transparent by
+                // the stylesheet's rule that takes the icons' backdrop away
+                for (const [state, selector] of [
+                    ['hover', '#dash .dash-item-container .overview-tile:hover .overview-icon'],
+                    ['checked', '#dash .dash-item-container .show-apps:checked .overview-icon']]) {
+                    const found = h.dashHighlight(state);
+                    const [r, g, b, alpha] = h.surface(scheme, selector);
+                    const off = Math.max(...[r, g, b].map((v, c) => Math.abs(v - found[c])), Math.abs(alpha * 255 - found[3]));
+                    if (found[3] === 0 || off > 3)
+                        h.fail(`the dash's ${state} highlight in the ${scheme} case is ${found}, not ${[r, g, b].map(Math.round)} at ${alpha.toFixed(2)}`);
+                }
+                h.eval('Main.overview.dash.showAppsButton.checked = false; Main.overview.hide(); "ok"');
+                h.sleep(1.5);
+            }
         },
     },
     {
@@ -119,7 +173,7 @@ export const scenarios = [
             const entry = h.actorBox('Main.overview.searchEntry');
             const spot = {x: entry.x + entry.width - 40, y: entry.y + Math.floor(entry.height / 2) - 2, width: 4, height: 4};
             h.expectColour('search entry', h.shot().region(spot),
-                h.over(h.glass('A'), [100, 100, 100, 0.35]));
+                h.over(h.glass('A', 'dark'), h.surface('dark', '.search-entry')));
             h.note('whether the results read clearly is for the author to judge');
         },
     },
@@ -131,28 +185,28 @@ export const scenarios = [
             const shot = h.shot();
             const box = folderBox(h);
             const spot = {x: box.x + box.width - 100, y: box.y + 28, width: 4, height: 4};
-            // a light glassy card over the veiled, blurred overview; near its top corner
+            // a light glassy card over the blurred overview; near its top corner
             // nothing of the grid lies behind it
             h.expectColour('open folder', shot.region(spot),
-                h.over(h.over(h.glass('A'), h.veil('light')), [250, 250, 251, 0.6]), 15);
+                h.over(h.glass('A', 'light'), h.surface('light', '.app-folder-dialog-container .app-folder-dialog')), 15);
             // the wallpaper's glass is a flat field, so blurring it again leaves its colour
             h.expectColour('overview behind the folder', shot.region(h.besideFolder()),
-                h.over(h.glass('A'), h.veil('light')));
+                h.glass('A', 'light'));
             h.expectFolderBlur(true);
             h.expectNoDynamicBlur();
         },
     },
     {
-        path: 'folder-over-blur#folder-dark-veil',
+        path: 'folder-over-blur#no-veil',
         run(h) {
             // GNOME inhibits animations in the test machine, which has no GPU; they are
-            // let through here, so the veil is set by a running transition, as on real
-            // hardware, and not at once
+            // let through here, so GNOME eases its veil in as on real hardware, and
+            // the extension must drop the running transition
             h.eval(`imports.gi.St.Settings.get().uninhibit_animations(); 'ok'`);
             try {
                 openFolder(h);
                 h.expectColour('overview behind the folder', h.shot().region(h.besideFolder()),
-                    h.over(h.glass('A'), h.veil('dark')));
+                    h.glass('A', 'dark'));
                 h.expectFolderBlur(true);
             } finally {
                 h.eval(`imports.gi.St.Settings.get().inhibit_animations(); 'ok'`);
@@ -166,6 +220,60 @@ export const scenarios = [
             h.key('esc');
             h.sleep(1.5);
             h.expectFolderBlur(false);
+            h.expectColour('panel strip', h.shot().region(h.panelStrip()), h.panelGlass('A', 'dark'));
+        },
+    },
+    {
+        path: 'folder-over-blur#hover-leaves-nothing',
+        run(h) {
+            const height = Number(h.eval('global.stage.height'));
+            const width = Number(h.eval('global.stage.width'));
+            h.pointer([width - 20, height - 20]);
+            openFolder(h);
+            const box = folderBox(h);
+            const before = h.shot();
+            const icon = h.actorBox(`(() => {
+                const walk = a => [a, ...a.get_children().flatMap(walk)];
+                const dialog = Main.layoutManager.overviewGroup.get_children().find(c => c._isOpen);
+                return walk(dialog).find(a => a.has_style_class_name?.('overview-tile') && a.is_mapped());
+            })()`);
+            const cx = icon.x + icon.width / 2, cy = icon.y + icon.height / 2;
+            h.pointer([cx - 10, cy - 10], [cx, cy], [cx + 5, cy + 5]);
+            h.sleep(1);
+            h.pointer([cx + icon.width, cy + 20], [width - 20, height - 20]);
+            h.sleep(1.5);
+            const after = h.shot();
+            const most = before.differs(after, box);
+            if (most > 3)
+                h.fail(`the folder differs by up to ${most} after a hover passed over an icon (${before.file}, ${after.file})`);
+            h.expectNoDynamicBlur();
+        },
+    },
+    {
+        path: 'folder-over-blur#folder-accent',
+        run(h) {
+            openFolder(h);
+            const withAccent = h.folderCard();
+            // no veil and no accent beside the card: the glass as it is
+            h.expectColour('overview behind the folder', h.shot().region(h.besideFolder()),
+                h.glass('A', 'dark'), 4);
+            h.setSetting('accent-tint', false);
+            const plain = h.folderCard();
+            const base = h.surface('dark', '.app-folder-dialog-container .app-folder-dialog');
+            if (Math.max(...plain.slice(0, 3).map((v, c) => Math.abs(v - base[c]))) > 1)
+                h.fail(`with the accent tint off the card is ${plain}, not accent.css's base ${base}`);
+            if (withAccent.slice(0, 3).every((v, c) => Math.abs(v - plain[c]) <= 1))
+                h.fail(`the accent tint changed nothing on the card: ${withAccent} against ${plain}`);
+            h.expectColour('overview behind the folder', h.shot().region(h.besideFolder()),
+                h.glass('A', 'dark'), 4);
+        },
+    },
+    {
+        path: 'folder-over-blur#panel-unchanged',
+        run(h) {
+            openFolder(h);
+            // nothing veils the overview, so the panel is its own glass, as with no folder open
+            h.expectColour('panel strip', h.shot().region(h.panelStrip()), h.panelGlass('A', 'dark'), 6);
         },
     },
     {
@@ -188,14 +296,14 @@ export const scenarios = [
             h.eval('Main.overview.dash.showAppsButton.checked = true');
             h.sleep(1.5);
             h.scheme('light');
-            h.expectTintCase('light');
-            const shot = h.shot();
-            h.expectColour('panel strip', shot.region(h.panelStrip()), h.glass('A'));
-            h.expectColour('app grid background', shot.region(h.cornerBottomLeft()), h.glass('A'));
+            h.expectCase('light');
+            const shot = h.lastShot;
+            h.expectColour('panel strip', shot.region(h.panelStrip()), h.panelGlass('A', 'light'));
+            h.expectColour('app grid background', shot.region(h.cornerBottomLeft()), h.glass('A', 'light'));
             const dash = h.actorBox('Main.overview.dash._background');
             const spot = {x: dash.x + 4, y: dash.y + Math.floor(dash.height / 2) - 2, width: 4, height: 4};
             h.expectColour('dash background', shot.region(spot),
-                h.over(h.glass('A'), [255, 255, 255, 0.5]));
+                h.over(h.glass('A', 'light'), h.surface('light', '#dash .dash-background')));
             // GNOME's own variant is still dark: its white clock must have been made dark
             const clock = shot.region(h.actorBox('Main.panel.statusArea.dateMenu._clockDisplay'));
             if (Math.min(...clock.darkest) > 100)
@@ -213,8 +321,8 @@ export const scenarios = [
         path: 'follows-colour-scheme#prefer-light',
         run(h) {
             h.scheme('light-only');
-            h.expectTintCase('light');
-            h.expectColour('panel strip', h.shot().region(h.panelStrip()), h.glass('A'));
+            h.expectCase('light');
+            h.expectColour('panel strip', h.shot().region(h.panelStrip()), h.panelGlass('A', 'light'));
         },
     },
     {
@@ -222,18 +330,18 @@ export const scenarios = [
         run(h) {
             h.scheme('light');
             h.scheme('dark');
-            h.expectTintCase('dark');
-            h.expectColour('panel strip', h.shot().region(h.panelStrip()), h.glass('A'));
+            h.expectCase('dark');
+            h.expectColour('panel strip', h.shot().region(h.panelStrip()), h.panelGlass('A', 'dark'));
         },
     },
     {
         path: 'follows-wallpaper#new-wallpaper',
         run(h) {
             h.wallpaper('B');
-            h.expectColour('panel strip', h.shot().region(h.panelStrip()), h.glass('B'));
+            h.expectColour('panel strip', h.shot().region(h.panelStrip()), h.panelGlass('B', 'dark'));
             h.key('super');
             h.waitFor(OVERVIEW_JS);
-            h.expectColour('window picker background', h.shot().region(h.cornerBottomLeft()), h.glass('B'));
+            h.expectColour('window picker background', h.shot().region(h.cornerBottomLeft()), h.glass('B', 'dark'));
         },
     },
     {
@@ -271,7 +379,26 @@ export const scenarios = [
         },
     },
     {
-        path: 'rest-left-to-gnome#menus-untouched',
+        path: 'costs-nothing-at-rest#overview-shows-baked',
+        run(h) {
+            for (let i = 0; i < 3; i++) {
+                h.key('super');
+                h.waitFor(OVERVIEW_JS);
+                h.eval('Main.overview.dash.showAppsButton.checked = true');
+                h.sleep(1);
+                h.key('esc');
+                h.sleep(0.5);
+                h.key('esc');
+                h.sleep(1);
+            }
+            const effects = h.glassEffects();
+            if (effects.length)
+                h.fail(`effects left on the glass after baking: ${effects.join(', ')}`);
+            h.expectColour('panel strip', h.shot().region(h.panelStrip()), h.panelGlass('A', 'dark'), 4);
+        },
+    },
+    {
+        path: 'popups#quick-settings',
         run(h) {
             const look = () => {
                 h.eval('Main.panel.statusArea.quickSettings.menu.open(false)');
@@ -284,10 +411,14 @@ export const scenarios = [
                 return mean;
             };
             const enabled = look();
+            // the popup's own colour where nothing lies on it, and not GNOME's
+            h.expectColour('Quick Settings with the extension', {mean: enabled, spread: 0},
+                themeColour(h, 'popup-menu-content').slice(0, 3), 4);
             h.setEnabled(false);
             const disabled = look();
             h.setEnabled(true);
-            h.expectColour('Quick Settings with the extension', {mean: enabled, spread: 0}, disabled, 4);
+            if (Math.max(...enabled.map((v, c) => Math.abs(v - disabled[c]))) < 3)
+                h.fail(`Quick Settings look the same with the extension as without it: ${enabled.map(Math.round)}`);
         },
     },
     {
@@ -301,8 +432,8 @@ export const scenarios = [
         run(h) {
             h.scheme('light');
             h.setLightStyle(false);
-            h.expectTintCase('dark');
-            h.expectColour('panel strip', h.shot().region(h.panelStrip()), h.glass('A'));
+            h.expectCase('dark');
+            h.expectColour('panel strip', h.shot().region(h.panelStrip()), h.panelGlass('A', 'dark'));
             h.expectQuickSettings('dark');
         },
     },
@@ -311,36 +442,116 @@ export const scenarios = [
         run(h) {
             h.setLightStyle(false);
             h.scheme('light-only');
-            h.expectTintCase('dark');
-            h.expectColour('panel strip', h.shot().region(h.panelStrip()), h.glass('A'));
+            h.expectCase('dark');
+            h.expectColour('panel strip', h.shot().region(h.panelStrip()), h.panelGlass('A', 'dark'));
             h.expectQuickSettings('dark');
         },
     },
     {
         path: 'tint-tunable#accent-off',
         run(h) {
-            const withAccent = h.tint();
+            h.key('super');
+            h.waitFor(OVERVIEW_JS);
+            const dash = h.actorBox('Main.overview.dash._background');
+            const spot = {x: dash.x + 4, y: dash.y + Math.floor(dash.height / 2) - 2, width: 4, height: 4};
+            const withAccent = h.shot();
             h.setSetting('accent-tint', false);
-            const plain = h.tint();
-            // the dark case's base colour, rgb(0, 3, 4), at the default depth
-            if (Math.max(...plain.slice(0, 3).map((v, c) => Math.abs(v - [0, 3, 4][c]))) > 1)
-                h.fail(`with the accent tint off the tint is ${plain}, not the plain base colour`);
-            if (withAccent.slice(0, 3).every((v, c) => Math.abs(v - plain[c]) <= 1))
-                h.fail(`the accent tint changed nothing: ${withAccent} against ${plain}`);
-            h.expectColour('panel strip', h.shot().region(h.panelStrip()), h.glass('A'));
+            const plain = h.shot();
+            // the glass with no accent over it, the dash its plain base colour
+            h.expectColour('window picker background', plain.region(h.cornerBottomLeft()), h.glass('A', 'dark'), 4);
+            h.expectColour('dash background', plain.region(spot),
+                h.over(h.glass('A', 'dark'), h.surface('dark', '#dash .dash-background')), 4);
+            const off = Math.max(...withAccent.region(spot).mean.map((v, c) => Math.abs(v - plain.region(spot).mean[c])));
+            if (off < 2)
+                h.fail('the accent tint changed nothing on the dash');
+            h.expectNoDynamicBlur();
+        },
+    },
+    {
+        path: 'popups#light-popup-tinted',
+        run(h) {
+            h.scheme('light');
+            const accent = h.accentColour();
+            const k = h.accentShare('light', 'popup') / 100 * h.accentStrength();
+            // the popup: the panes' grey with a touch of the accent, opaque, not GNOME's near-white
+            const popup = themeColour(h, 'popup-menu-content');
+            const want = [245, 245, 246].map((v, c) => v * (1 - k) + accent[c] * k);
+            if (Math.max(...want.map((v, c) => Math.abs(v - popup[c]))) > 2 || popup[3] < 0.99)
+                h.fail(`a light popup is ${popup}, not ${want.map(Math.round)} opaque`);
+            // a button in it: the dock's pane; a card: the pane as it shows over the popup,
+            // opaque, since GNOME stacks cards and shows a banner over windows
+            const pane = h.surface('light', '#dash .dash-background');
+            const card = [...h.over(popup.slice(0, 3), pane), 1];
+            for (const [classes, want] of [['button quick-toggle', pane], ['message', card]]) {
+                const found = themeColour(h, classes);
+                if (Math.max(...want.map((v, c) => Math.abs(v - found[c]) / (c === 3 ? 1 / 255 : 1))) > 2)
+                    h.fail(`.${classes.replace(' ', '.')} in a light popup is ${found}, not ${want.map(v => v.toFixed(2))}`);
+            }
+            expectAccentToggle(h, accent);
+        },
+    },
+    {
+        path: 'popups#dark-popup-tinted',
+        run(h) {
+            h.scheme('dark');
+            const accent = h.accentColour();
+            // GNOME's dark popup is #36363a; the extension's is darker, opaque, and leans to the accent
+            const popup = themeColour(h, 'popup-menu-content');
+            const lightness = ([r, g, b]) => 0.2126 * r + 0.7152 * g + 0.0722 * b;
+            if (!(lightness(popup) < lightness([0x36, 0x36, 0x3a]) - 4) || popup[3] < 0.99)
+                h.fail(`a dark popup is ${popup}, not darker than GNOME's #36363a and opaque`);
+            const card = themeColour(h, 'message');
+            if (!(lightness(card) > lightness(popup) + 10))
+                h.fail(`a dark popup's card is ${card}, not lighter than the popup ${popup}`);
+            // tinted: off grey, and toward the accent
+            const offGrey = c => [0, 1, 2].map(i => c[i] - (c[0] + c[1] + c[2]) / 3);
+            const lean = offGrey(card).reduce((sum, v, i) => sum + v * offGrey(accent)[i], 0);
+            if (!(Math.max(...offGrey(card).map(Math.abs)) > 1.5 && lean > 0))
+                h.fail(`a dark popup's card ${card} does not lean to the accent ${accent}`);
+            expectAccentToggle(h, accent);
+        },
+    },
+    {
+        path: 'tint-tunable#light-accent',
+        run(h) {
+            h.key('super');
+            h.waitFor(OVERVIEW_JS);
+            const accent = h.eval(`new (imports.gi.Gio.Settings)({schema_id: 'org.gnome.desktop.interface'}).get_string('accent-color')`);
+            const set = name => h.eval(`new (imports.gi.Gio.Settings)({schema_id: 'org.gnome.desktop.interface'}).set_string('accent-color', '${name}'); 'ok'`);
+            const shares = {};
+            try {
+                for (const name of ['purple', 'yellow']) {
+                    set(name);
+                    h.sleep(2);
+                    // the glass takes the share of this accent that its luminance gives it
+                    const [, , , want] = h.accentOverGlass('dark');
+                    const [, , , found] = h.glassAccent();
+                    if (Math.abs(found - want) > 0.004)
+                        h.fail(`the ${name} accent is over the glass at ${(found * 100).toFixed(2)} %, not ${(want * 100).toFixed(2)} %`);
+                    shares[name] = found;
+                    h.expectColour(`window picker background with the ${name} accent`,
+                        h.shot().region(h.cornerBottomLeft()), h.glass('A', 'dark'), 4);
+                }
+                // yellow is far lighter than purple, and tints the dark glass with less of itself
+                if (!(shares.yellow < shares.purple * 0.6))
+                    h.fail(`the yellow accent's share over the glass is not well under purple's: ${JSON.stringify(shares)}`);
+            } finally {
+                set(accent);
+                h.sleep(1);
+            }
         },
     },
     {
         path: 'tint-tunable#depth-changed',
         run(h) {
-            h.setSetting('dark-depth', 50);
-            const tint = h.tint();
-            if (Math.abs(tint[3] - 0.5) > 0.01)
-                h.fail(`with the dark depth at 50 the tint's opacity is ${tint[3]}`);
-            h.expectColour('panel strip', h.shot().region(h.panelStrip()), h.glass('A'));
+            h.setSetting('dark-depth-scale', 150);
+            h.sleep(1);
+            // baked again: target 0 rather than 12
+            h.expectColour('panel strip', h.shot().region(h.panelStrip()), h.panelGlass('A', 'dark'), 4);
+            h.expectBlurred('panel strip', h.lastShot.region(h.panelStrip()));
             h.key('super');
             h.waitFor(OVERVIEW_JS);
-            h.expectColour('window picker background', h.shot().region(h.cornerBottomLeft()), h.glass('A'));
+            h.expectColour('window picker background', h.shot().region(h.cornerBottomLeft()), h.glass('A', 'dark'), 4);
         },
     },
     {

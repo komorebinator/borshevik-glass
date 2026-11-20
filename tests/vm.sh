@@ -17,10 +17,13 @@ usage: $0 setup [image]     make the machine's disk from a bootc image with GNOM
        $0 ssh [command]     a root shell in the machine, or a command run there as root
        $0 eval <js|file>    evaluate JavaScript in tester's GNOME Shell and print the result
        $0 key <keys>...     send keys to the machine, e.g. esc or super+a
+       $0 pointer <x> <y>...  move the pointer through points of the screen, in pixels
        $0 scheme <dark|light|light-only>  set tester's color-scheme to prefer-dark, default
                              (Dark Style off) or prefer-light
        $0 wallpaper <file>  make an image tester's wallpaper in both schemes
        $0 scenarios [filter] act out the scenarios of tests/scenarios.js in tester's session
+       $0 styles [filter]   photograph GNOME's popups in every state, case and accent, one sheet
+                             per state, in glass-styles/ of the machine's directory
        $0 shot [file]       save a screenshot (default: screen.png in the machine's directory)
        $0 stop              power it off
 EOF
@@ -321,6 +324,28 @@ print(json.dumps({"keys": [{"type": "qcode", "data": names.get(x, x)} for x in s
 
 cmd_key() { need_running; [[ $# -gt 0 ]] || usage; send_keys "$@"; }
 
+# Moves the pointer through points of the screen, in its pixels, a moment apart: the
+# usb-tablet's absolute axes run from 0 to 32767 over the whole screen, whose size the
+# shell tells.
+cmd_pointer() {
+    need_running
+    [[ $# -gt 0 && $(( $# % 2 )) -eq 0 ]] || usage
+    local size w h r
+    size="$(shell_eval 'global.stage.width + " " + global.stage.height')"
+    read -r w h <<<"$size"
+    while [[ $# -gt 0 ]]; do
+        r="$(qmp input-send-event "$(python3 -c '
+import json, sys
+x, y, w, h = map(float, sys.argv[1:])
+axis = lambda v, n: round(v * 32767 / max(n - 1, 1))
+print(json.dumps({"events": [{"type": "abs", "data": {"axis": "x", "value": axis(x, w)}},
+                             {"type": "abs", "data": {"axis": "y", "value": axis(y, h)}}]}))' "$1" "$2" "$w" "$h")")"
+        [[ "$r" == *'"return"'* ]] || die "cannot move the pointer to $1,$2: $r"
+        shift 2
+        sleep 0.2
+    done
+}
+
 # As Quick Settings' Dark Style toggle: prefer-dark or default; prefer-light, which only
 # gsettings sets, as light-only. A moment is left for the shell to redraw.
 cmd_scheme() {
@@ -350,6 +375,11 @@ cmd_wallpaper() {
 cmd_scenarios() {
     need_running
     gjs -m "$repo_root/tests/vm/run.js" "$@"
+}
+
+cmd_styles() {
+    need_running
+    gjs -m "$repo_root/tests/vm/styles.js" "$@"
 }
 
 cmd_shot() {
@@ -397,9 +427,11 @@ case "$cmd" in
     ssh)     need_running; guest_once "$@" ;;
     eval)    cmd_eval "$@" ;;
     key)     cmd_key "$@" ;;
+    pointer) cmd_pointer "$@" ;;
     scheme)  cmd_scheme "$@" ;;
     wallpaper) cmd_wallpaper "$@" ;;
     scenarios) cmd_scenarios "$@" ;;
+    styles)  cmd_styles "$@" ;;
     shot)    cmd_shot "$@" ;;
     stop)    cmd_stop ;;
     *)       usage ;;

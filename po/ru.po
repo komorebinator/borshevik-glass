@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: borshevik-glass\n"
 "Report-Msgid-Bugs-To: https://github.com/komorebinator/borshevik-glass/"
 "issues\n"
-"POT-Creation-Date: 2026-11-03 20:52+0400\n"
+"POT-Creation-Date: 2026-11-20 16:24+0400\n"
 "PO-Revision-Date: 2026-11-03\n"
 "Last-Translator: komorebinator\n"
 "Language-Team: Russian\n"
@@ -17,15 +17,15 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
-#: borshevik-glass@komorebinator/prefs.js:34
+#: borshevik-glass@komorebinator/prefs.js:38
 msgid "Appearance"
 msgstr "Внешний вид"
 
-#: borshevik-glass@komorebinator/prefs.js:36
+#: borshevik-glass@komorebinator/prefs.js:40
 msgid "Light style"
 msgstr "Светлый стиль"
 
-#: borshevik-glass@komorebinator/prefs.js:37
+#: borshevik-glass@komorebinator/prefs.js:41
 msgid ""
 "When dark style is off, the panel, the overview and GNOME’s menus turn "
 "light. Off: always dark."
@@ -33,26 +33,37 @@ msgstr ""
 "Когда тёмный стиль выключен, панель, обзор и меню GNOME становятся светлыми. "
 "Если выключено — всегда тёмные."
 
-#: borshevik-glass@komorebinator/prefs.js:43
-msgid "Tint"
-msgstr "Оттенок"
+#: borshevik-glass@komorebinator/prefs.js:47
+msgid "Glass"
+msgstr "Стекло"
 
-#: borshevik-glass@komorebinator/prefs.js:45
+#: borshevik-glass@komorebinator/prefs.js:49
 msgid "Accent tint"
 msgstr "Акцентный оттенок"
 
-#: borshevik-glass@komorebinator/prefs.js:46
+#: borshevik-glass@komorebinator/prefs.js:50
 msgid "Mix the accent colour into the glass"
 msgstr "Подмешивать акцентный цвет в стекло"
 
-#: borshevik-glass@komorebinator/prefs.js:50
+#: borshevik-glass@komorebinator/prefs.js:54
 msgid "Accent amount"
 msgstr "Доля акцента"
 
-#: borshevik-glass@komorebinator/prefs.js:53
+#: borshevik-glass@komorebinator/prefs.js:58
+msgid "Tinted text"
+msgstr "Окрашенный текст"
+
+#: borshevik-glass@komorebinator/prefs.js:59
+msgid ""
+"Give the text in menus, Quick Settings and the calendar a little of the "
+"accent colour"
+msgstr ""
+"Добавить немного цвета акцента в текст меню, быстрых настроек и календаря"
+
+#: borshevik-glass@komorebinator/prefs.js:64
 msgid "Dark depth"
 msgstr "Плотность тёмного стекла"
 
-#: borshevik-glass@komorebinator/prefs.js:54
+#: borshevik-glass@komorebinator/prefs.js:65
 msgid "Light depth"
 msgstr "Плотность светлого стекла"
