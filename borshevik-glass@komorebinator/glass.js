@@ -17,6 +17,7 @@ import * as Background from 'resource:///org/gnome/shell/ui/background.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 import {BAND_FADE, CASES, SAMPLE_WIDTH, analyse, analyseColour, liftFor, sample} from './adapt.js';
+import {SnippetEffect} from './shader.js';
 
 // Logical pixels, scaled by the monitor scale factor: Borshevik's Blur my Shell sigma.
 export const BLUR_RADIUS = 30;
@@ -74,10 +75,9 @@ cogl_color_out = vec4(lifted * c.a, c.a);
 `;
 
 const LiftEffect = GObject.registerClass(
-class BorshevikGlassLiftEffect extends Shell.GLSLEffect {
-    vfunc_build_pipeline() {
-        // GNOME Shell's own enum where it has one, Cogl's where it does not
-        this.add_glsl_snippet((Shell.SnippetHook ?? Cogl.SnippetHook).FRAGMENT, LIFT_DECLARATIONS, LIFT_CODE, false);
+class BorshevikGlassLiftEffect extends SnippetEffect {
+    get snippet() {
+        return {declarations: LIFT_DECLARATIONS, code: LIFT_CODE};
     }
 
     // `fade` in pixels of the monitor
@@ -88,7 +88,7 @@ class BorshevikGlassLiftEffect extends Shell.GLSLEffect {
             ['panel', 1, [panel]], ['fade', 1, [fade]],
         ];
         for (const [name, n, value] of uniforms)
-            this.set_uniform_float(this.get_uniform_location(name), n, value);
+            this.setUniform(name, n, value);
     }
 });
 
