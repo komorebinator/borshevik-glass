@@ -6,7 +6,6 @@
 // behaviour#folder-over-blur and the guideline on static glass.
 
 import Clutter from 'gi://Clutter';
-import Cogl from 'gi://Cogl';
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import Shell from 'gi://Shell';
@@ -16,6 +15,7 @@ import * as AppDisplay from 'resource:///org/gnome/shell/ui/appDisplay.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 import {BAKE_MARGIN, BLUR_RADIUS, GrabEffect} from './glass.js';
+import {SnippetEffect} from './shader.js';
 
 const BACKDROP_NAME = 'borshevik-glass-folder-backdrop';
 const BAKE_NAME = 'borshevik-glass-folder-bake';
@@ -47,9 +47,9 @@ cogl_color_out *= clamp(0.5 - d, 0.0, 1.0) * alpha;
 `;
 
 const MaskEffect = GObject.registerClass(
-class BorshevikGlassMaskEffect extends Shell.GLSLEffect {
-    vfunc_build_pipeline() {
-        this.add_glsl_snippet((Shell.SnippetHook ?? Cogl.SnippetHook).FRAGMENT, MASK_DECLARATIONS, MASK_CODE, false);
+class BorshevikGlassMaskEffect extends SnippetEffect {
+    get snippet() {
+        return {declarations: MASK_DECLARATIONS, code: MASK_CODE};
     }
 
     // The card's place is read as the effect paints, not as GNOME announces it: as
@@ -58,7 +58,7 @@ class BorshevikGlassMaskEffect extends Shell.GLSLEffect {
     // that folder was blurred whole). `uniforms` gives them, or null to keep the last.
     vfunc_paint(node, paintContext, flags) {
         for (const [name, n, value] of this.uniforms?.() ?? [])
-            this.set_uniform_float(this.get_uniform_location(name), n, value);
+            this.setUniform(name, n, value);
         super.vfunc_paint(node, paintContext, flags);
     }
 });
